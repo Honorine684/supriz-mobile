@@ -1,0 +1,146 @@
+// ignore_for_file: prefer_const_constructors
+
+import 'package:flutter/material.dart';
+import 'package:supriz/screens/auth/login_screen.dart';
+import '../../consts/colors.dart';
+import '../../widgets/appbar_custom.dart';
+import '../../widgets/our_button.dart';
+
+class ResetPwd extends StatefulWidget {
+  const ResetPwd({super.key});
+
+  @override
+  _ResetPwdState createState() => _ResetPwdState();
+}
+
+class _ResetPwdState extends State<ResetPwd> {
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
+  final String _errorMessage = '';
+
+  void _validateAndSubmit() {
+/*
+    final newPassword = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+    if (newPassword.isEmpty || confirmPassword.isEmpty) {
+      setState(() {
+        _errorMessage = 'Veuillez remplir tous les champs.';
+      });
+      return;
+    }
+
+    if (newPassword != confirmPassword) {
+      setState(() {
+        _errorMessage = 'Les mots de passe ne correspondent pas.';
+      });
+      return;
+    }
+ */
+
+    // Si tout est valide
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => LoginScreen()),
+          (Route<dynamic> route) => false,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: whiteColor,
+      appBar: CustomAppBar(title: 'Nouveau mot de passe'),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Text(
+              "Nouveau mot de passe",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              "Entrez un nouveau mot de passe et confirmez-le.",
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Champ pour le nouveau mot de passe
+            TextField(
+              controller: _passwordController,
+              obscureText: !_isPasswordVisible,
+              decoration: InputDecoration(
+                hintText: 'Nouveau mot de passe',
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: blueColor),
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isPasswordVisible = !_isPasswordVisible;
+                    });
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Champ pour la confirmation du mot de passe
+            TextField(
+              controller: _confirmPasswordController,
+              obscureText: !_isConfirmPasswordVisible,
+              decoration: InputDecoration(
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: blueColor),
+                ),
+                hintText: 'Confirmer le mot de passe',
+                border: OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isConfirmPasswordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                    });
+                  },
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Affichage du message d'erreur
+            if (_errorMessage.isNotEmpty)
+              Text(
+                _errorMessage,
+                style: const TextStyle(color: Colors.red),
+              ),
+
+            const SizedBox(height: 5),
+
+            // Bouton de validation
+            ourButton(
+              text: 'Valider',
+              backgroundColor: blueColor,
+              textColor: whiteColor,
+              onPressed: _validateAndSubmit,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
