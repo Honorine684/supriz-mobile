@@ -2,8 +2,11 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:supriz/screens/home/bottom_navigation.dart';
+import 'package:supriz/screens/panier/cart_provider.dart';
 import 'package:supriz/screens/splash/splash_screen.dart';
 import 'package:device_preview/device_preview.dart';
+import 'package:provider/provider.dart'; // Ajoutez cette ligne pour importer provider
 import 'connection_checker.dart';
 import 'consts/strings.dart';
 import 'consts/styles.dart';
@@ -35,9 +38,7 @@ class _SuprizState extends State<Supriz> {
   void initState() {
     super.initState();
     connectionChecker = ConnectionChecker();
-    connectionChecker.startConnectivityMonitor(
-        context
-    );
+    connectionChecker.startConnectivityMonitor(context);
   }
 
   @override
@@ -48,17 +49,20 @@ class _SuprizState extends State<Supriz> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: appname,
-      theme: ThemeData(
-        scaffoldBackgroundColor: Colors.transparent,
-        appBarTheme: const AppBarTheme(backgroundColor: Colors.transparent),
-        fontFamily: regular,
-        useMaterial3: true
+    return ChangeNotifierProvider(
+      create: (ctx) => CartProvider(), // Fournir le CartProvider ici
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: appname,
+        theme: ThemeData(
+          scaffoldBackgroundColor: Colors.transparent,
+          appBarTheme: const AppBarTheme(backgroundColor: Colors.transparent),
+          fontFamily: regular,
+          useMaterial3: true,
+        ),
+        //home: SplashScreen(),
+        home: BottomNavigation(),
       ),
-      home:  SplashScreen(),
-      //home:  BottomNavigation(),
     );
   }
 }

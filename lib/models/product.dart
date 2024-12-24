@@ -109,6 +109,51 @@ Et comme toujours, ces erreurs les mènent inévitablement vers l’obscurité d
           category: 'Homme',
           subCategory: 'T-shirts',
         ),
+        Product(
+          id: 1,
+          title: 'T-shirt 1',
+          price: 20.0,
+          description: """Mais je sais aussi qu’une fois qu’ils rencontrent du succès, beaucoup de hackers commencent à se sentir invincibles.
+Ils deviennent arrogants, relâchent leur vigilance, et finissent par commettre des erreurs.
+Et comme toujours, ces erreurs les mènent inévitablement vers l’obscurité de la prison.""",
+          entreprise: 'Entreprise 1',
+          evaluation: 4,
+          images: ["https://ewxd4bbz5hp.exactdn.com/wp-content/uploads/2019/08/07-Bottega-Veneta_ThePeakSingapore-700x900-311x400.jpg"],
+          personnalisable: 'yes',
+          statut: 'Disponible',
+          category: 'Homme',
+          subCategory: 'T-shirts',
+        ),
+        Product(
+          id: 1,
+          title: 'T-shirt 1',
+          price: 20.0,
+          description: """Mais je sais aussi qu’une fois qu’ils rencontrent du succès, beaucoup de hackers commencent à se sentir invincibles.
+Ils deviennent arrogants, relâchent leur vigilance, et finissent par commettre des erreurs.
+Et comme toujours, ces erreurs les mènent inévitablement vers l’obscurité de la prison.""",
+          entreprise: 'Entreprise 1',
+          evaluation: 4,
+          images: ["https://ewxd4bbz5hp.exactdn.com/wp-content/uploads/2019/08/07-Bottega-Veneta_ThePeakSingapore-700x900-311x400.jpg"],
+          personnalisable: 'yes',
+          statut: 'Disponible',
+          category: 'Homme',
+          subCategory: 'T-shirts',
+        ),
+        Product(
+          id: 1,
+          title: 'T-shirt 1',
+          price: 20.0,
+          description: """Mais je sais aussi qu’une fois qu’ils rencontrent du succès, beaucoup de hackers commencent à se sentir invincibles.
+Ils deviennent arrogants, relâchent leur vigilance, et finissent par commettre des erreurs.
+Et comme toujours, ces erreurs les mènent inévitablement vers l’obscurité de la prison.""",
+          entreprise: 'Entreprise 1',
+          evaluation: 4,
+          images: ["https://ewxd4bbz5hp.exactdn.com/wp-content/uploads/2019/08/07-Bottega-Veneta_ThePeakSingapore-700x900-311x400.jpg"],
+          personnalisable: 'yes',
+          statut: 'Disponible',
+          category: 'Homme',
+          subCategory: 'T-shirts',
+        ),
         // Ajoutez d'autres produits ici
       ],
       'Pantalons': [
@@ -121,7 +166,7 @@ Ils deviennent arrogants, relâchent leur vigilance, et finissent par commettre 
 Et comme toujours, ces erreurs les mènent inévitablement vers l’obscurité de la prison.""",
           entreprise: 'Entreprise 2',
           evaluation: 5,
-          images: ["https://placehold.co/800@2x.png"],
+          images: ["https://ewxd4bbz5hp.exactdn.com/wp-content/uploads/2019/08/07-Bottega-Veneta_ThePeakSingapore-700x900-311x400.jpg"],
           personnalisable: 'Non',
           statut: 'Disponible',
           category: 'Homme',

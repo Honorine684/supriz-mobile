@@ -2,8 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:provider/provider.dart';
 import '../../consts/consts.dart';
 import '../assistance/assistance_screen.dart';
+import '../panier/cart_provider.dart';
+import '../panier/panier_screen.dart';
 import '../parametres/parametres_screen.dart';
 import '../produits/produits_screen.dart';
 import 'home_screen.dart';
@@ -17,7 +20,6 @@ class BottomNavigation extends StatefulWidget {
 
 class _BottomNavigationState extends State<BottomNavigation> {
   int _currentIndex = 0;
-  final int _cartItemCount = 3;
   int _selectedCategoryIndex = 0;
   String _selectedSubCategory = "T-shirts";
 
@@ -29,7 +31,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
     _pages.addAll([
       HomeScreen(onCategorySelected: _onCategorySelected),
       ProduitScreen(initialCategoryIndex: _selectedCategoryIndex, initialSubCategory: _selectedSubCategory),
-      const Center(child: Text("Panier", style: TextStyle(fontSize: 24))),
+      PanierScreen(),
       ParametresScreen(),
       AssistanceScreen(),
     ]);
@@ -47,12 +49,15 @@ class _BottomNavigationState extends State<BottomNavigation> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final cartProvider = Provider.of<CartProvider>(context);
+    final cartItemCount = cartProvider.distinctProductCount;
 
     return Scaffold(
+
       backgroundColor: Colors.white,
       body: _pages[_currentIndex],
       bottomNavigationBar: _buildBottomNavigationBar(screenHeight),
-      floatingActionButton: _buildFloatingActionButton(),
+      floatingActionButton: _buildFloatingActionButton(cartItemCount),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
@@ -117,7 +122,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
   }
 
   // Bouton flottant pour le panier
-  Widget _buildFloatingActionButton() {
+  Widget _buildFloatingActionButton(int cartItemCount) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -139,7 +144,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
             ),
           ),
         ),
-        if (_cartItemCount > 0)
+        if (cartItemCount > 0)
           Positioned(
             right: -5,
             top: -1,
@@ -152,7 +157,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
               ),
               child: Center(
                 child: Text(
-                  '$_cartItemCount',
+                  '$cartItemCount',
                   style: TextStyle(
                     color: _currentIndex == 2 ? blackColor : whiteColor,
                     fontSize: 12,
@@ -195,7 +200,6 @@ class _BottomNavigationState extends State<BottomNavigation> {
                 BlendMode.srcIn,
               ),
             ),
-
           if (icon != null)
             Icon(
               icon,

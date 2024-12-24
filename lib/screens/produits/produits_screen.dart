@@ -8,6 +8,7 @@ import '../../consts/colors.dart';
 import '../../consts/images.dart';
 import '../../models/product.dart';
 import '../../widgets/our_button.dart';
+import '../panier/cart_provider.dart';
 
 class ProduitScreen extends StatefulWidget {
   final int initialCategoryIndex;
@@ -480,7 +481,11 @@ class _ProduitScreenState extends State<ProduitScreen> {
                             ourButton(
                               text: "Ajouter au panier",
                               onPressed: () {
-
+                                // Logique pour ajouter le produit au panier avec la quantité
+                                Provider.of<CartProvider>(context, listen: false).addToCart(product, quantity);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Produit ajouté au panier')),
+                                );
                               },
                               suffixIcon: Icons.add_shopping_cart,
                               backgroundColor: vertpan,
@@ -497,6 +502,7 @@ class _ProduitScreenState extends State<ProduitScreen> {
         },
       );
     }
+
 
     void _showProductDetails(Product product) {
       showProductDialog(product);
