@@ -2,20 +2,13 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:supriz/screens/home/bottom_navigation.dart';
 import 'package:supriz/screens/panier/cart_provider.dart';
 import 'package:supriz/screens/splash/splash_screen.dart';
 import 'package:device_preview/device_preview.dart';
-import 'package:provider/provider.dart'; // Ajoutez cette ligne pour importer provider
+import 'package:provider/provider.dart';
 import 'connection_checker.dart';
 import 'consts/strings.dart';
 import 'consts/styles.dart';
-
-/*
-void main() {
-  runApp(Supriz());
-}
-*/
 
 void main() => runApp(
   DevicePreview(
@@ -37,8 +30,17 @@ class _SuprizState extends State<Supriz> {
   @override
   void initState() {
     super.initState();
+    /*
     connectionChecker = ConnectionChecker();
-    connectionChecker.startConnectivityMonitor(context);
+    connectionChecker.startConnectivityMonitor(onConnectionChanged: (hasInternet) {
+      if (!hasInternet) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Connexion Internet perdue')),
+        );
+      }
+    });
+
+     */
   }
 
   @override
@@ -50,7 +52,7 @@ class _SuprizState extends State<Supriz> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (ctx) => CartProvider(), // Fournir le CartProvider ici
+      create: (ctx) => CartProvider(),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: appname,
@@ -60,8 +62,9 @@ class _SuprizState extends State<Supriz> {
           fontFamily: regular,
           useMaterial3: true,
         ),
-        //home: SplashScreen(),
-        home: BottomNavigation(),
+        //home: BottomNavigation(),
+        home: SplashScreen(),
+        //navigatorKey: connectionChecker.navigatorKey,
       ),
     );
   }

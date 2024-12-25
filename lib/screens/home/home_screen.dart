@@ -8,6 +8,7 @@ import '../../consts/colors.dart';
 import '../../consts/images.dart';
 import '../../models/publicite.dart';
 import '../produits/supriz.dart';
+import '../profil/profil_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final Function(int, String) onCategorySelected;
@@ -149,12 +150,17 @@ class HomeScreen extends StatelessWidget {
           },
         ),
         GestureDetector(
-          onTap: () {},
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) =>
+              ProfilScreen()
+            ),);
+          },
           child: Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: CircleAvatar(
+              backgroundColor: whiteColor,
               radius: 15,
-              backgroundImage: NetworkImage('https://via.placeholder.com/150'),
+              child: Icon(Icons.account_circle, color: blackColor,),
             ),
           ),
         ),

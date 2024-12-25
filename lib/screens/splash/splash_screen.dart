@@ -9,6 +9,7 @@ import '../../consts/images.dart';
 import '../../consts/strings.dart';
 import '../../widgets/splash_widget.dart';
 import '../auth/login_screen.dart';
+import '../home/bottom_navigation.dart';
 import '../onboarding/onboarding.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -20,23 +21,13 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
 
-  late ConnectionChecker connectionChecker;
 
   @override
   void initState() {
     super.initState();
-    connectionChecker = ConnectionChecker();
-    connectionChecker.startConnectivityMonitor(
-        context
-    );
     _navigateBasedOnUserStatus(); // Gestion de la redirection
   }
 
-  @override
-  void dispose() {
-    connectionChecker.dispose();
-    super.dispose();
-  }
 
 
   Future<void> _navigateBasedOnUserStatus() async {
@@ -66,12 +57,11 @@ class _SplashScreenState extends State<SplashScreen> {
     }
     // Cas 3 : Utilisateur connecté
     else {
-      /*
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
+        MaterialPageRoute(builder: (context) => BottomNavigation()),
       );
-       */
+
     }
   }
 
