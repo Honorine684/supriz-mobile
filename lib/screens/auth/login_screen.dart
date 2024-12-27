@@ -7,7 +7,7 @@ import 'package:supriz/widgets/auth_widget.dart';
 import '../../consts/consts.dart';
 import '../../widgets/custom_textField.dart';
 import '../../widgets/our_button.dart';
-import '../home/bottom_navigation.dart';
+import '../../services/auth_service.dart';
 
 // Page de connexion
 class LoginScreen extends StatefulWidget {
@@ -22,6 +22,27 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
+  bool _isLoading = false; // État de chargement
+  final AuthService _authService = AuthService();
+
+  Future<void> loginUser() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true; // Début du chargement
+      });
+
+      await _authService.loginUser(
+        emailController.text,
+        passwordController.text,
+        context,
+            (bool isLoading) {
+          setState(() {
+            _isLoading = isLoading; // Mettre à jour l'état de chargement
+          });
+        },
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,23 +112,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 SizedBox(height: 10),
                                 ourButton(
                                   text: 'Connexion',
-                                  onPressed: () {
-                                    /*
-                                    if (_formKey.currentState!.validate()) {
-
-                                    }
-                                     */
-                                    Navigator.pushAndRemoveUntil(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => BottomNavigation()),
-                                          (Route<dynamic> route) => false,
-                                    );
-                                  },
+                                  onPressed: loginUser,
+                                  isLoading: _isLoading, // Passer l'état de chargement
                                 ),
                                 TextButton(
                                   style: ButtonStyle(
-                                    padding: WidgetStateProperty.all(EdgeInsets.symmetric(horizontal: 10, vertical: 3)),
-                                    foregroundColor: WidgetStateProperty.all(blueColor),
+                                    padding: MaterialStateProperty.all(EdgeInsets.symmetric(horizontal: 10, vertical: 3)),
+                                    foregroundColor: MaterialStateProperty.all(blueColor),
                                   ),
                                   onPressed: () {
                                     Navigator.push(
@@ -146,4 +157,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-

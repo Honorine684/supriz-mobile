@@ -2,6 +2,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:supriz/screens/home/bottom_navigation.dart';
 import 'package:supriz/screens/panier/cart_provider.dart';
 import 'package:supriz/screens/splash/splash_screen.dart';
 import 'package:device_preview/device_preview.dart';
@@ -62,8 +63,8 @@ class _SuprizState extends State<Supriz> {
           fontFamily: regular,
           useMaterial3: true,
         ),
-        //home: BottomNavigation(),
-        home: SplashScreen(),
+        home: BottomNavigation(),
+        //home: SplashScreen(),
         //navigatorKey: connectionChecker.navigatorKey,
       ),
     );

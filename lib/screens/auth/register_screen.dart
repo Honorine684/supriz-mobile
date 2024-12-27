@@ -1,11 +1,13 @@
-// ignore_for_file: prefer_const_constructors
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:supriz/screens/auth/login_screen.dart'; // Import de la page de connexion
 import 'package:supriz/widgets/auth_widget.dart';
 import '../../consts/consts.dart';
+import '../../widgets/appbar_custom.dart';
 import '../../widgets/custom_textField.dart';
 import '../../widgets/our_button.dart';
+import '../../services/auth_service.dart';
 
 // Page d'inscription
 class RegisterScreen extends StatefulWidget {
@@ -22,6 +24,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
+  bool _isLoading = false; // État de chargement
+  final AuthService _authService = AuthService();
+
+  Future<void> registerUser() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true; // Début du chargement
+      });
+
+      await _authService.registerUser(
+        usernameController.text,
+        emailController.text,
+        phoneController.text,
+        passwordController.text,
+        context,
+            (bool isLoading) {
+          setState(() {
+            _isLoading = isLoading; // Mettre à jour l'état de chargement
+          });
+        },
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +124,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     return null;
                                   },
                                   keyboardType: TextInputType.number,
-
                                 ),
                                 SizedBox(height: 8),
 
@@ -121,6 +145,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     if (value == null || value.isEmpty) {
                                       return 'Ce champ est requis';
                                     }
+                                    if (value.length < 8) {
+                                      return 'Le mot de passe doit contenir au moins 8 caractères';
+                                    }
+                                    if (!RegExp(r'^(?=.*[A-Z]).+$').hasMatch(value)) {
+                                      return 'Le mot de passe doit contenir au moins une lettre majuscule';
+                                    }
                                     return null;
                                   },
                                 ),
@@ -129,12 +159,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 // Bouton pour créer un compte
                                 ourButton(
                                   text: 'Creer un compte',
-
-                                  onPressed: () {
-                                    if (_formKey.currentState!.validate()) {
-
-                                    }
-                                  },
+                                  onPressed: registerUser,
+                                  isLoading: _isLoading, // Passer l'état de chargement
                                 ),
                                 SizedBox(height: 5),
                                 Text('ou'),
@@ -161,6 +187,132 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class OtpScreen extends StatefulWidget {
+  final String email;
+
+  const OtpScreen({super.key, required this.email});
+
+  @override
+  _OtpScreenState createState() => _OtpScreenState();
+}
+
+class _OtpScreenState extends State<OtpScreen> {
+  final TextEditingController _otpController = TextEditingController();
+  String _errorMessage = '';
+  bool _isLoading = false; // État de chargement
+  final AuthService _authService = AuthService();
+
+  Future<void> verifyOtp() async {
+    final otp = _otpController.text;
+    final email = widget.email;
+
+    setState(() {
+      _isLoading = true; // Début du chargement
+    });
+
+    await _authService.verifyOtp(email, otp, context, (bool isLoading) {
+      setState(() {
+        _isLoading = isLoading; // Mettre à jour l'état de chargement
+      });
+    });
+  }
+
+  Future<void> resendOtp() async {
+    final email = widget.email;
+
+    setState(() {
+      _isLoading = true; // Début du chargement
+    });
+
+    await _authService.resendOtp(email, context, (bool isLoading) {
+      setState(() {
+        _isLoading = isLoading; // Mettre à jour l'état de chargement
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: whiteColor,
+      appBar: CustomAppBar(title: 'Vérification OTP'),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Vous avez reçu un mail",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              "Entrer le code de vérification qui vous a été envoyé par mail pour pouvoir réinitialiser votre mot de passe",
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 14,
+              ),
+            ),
+            Image.asset(opt),
+            const SizedBox(height: 10),
+            PinCodeTextField(
+              appContext: context,
+              length: 4,
+              controller: _otpController,
+              onChanged: (value) {
+                setState(() {});
+              },
+              pinTheme: PinTheme(
+                shape: PinCodeFieldShape.box,
+                borderRadius: BorderRadius.circular(10),
+                fieldHeight: 50,
+                fieldWidth: 40,
+                inactiveColor: Colors.grey,
+                activeColor: blueColor,
+                selectedColor: Colors.green,
+                fieldOuterPadding: EdgeInsets.all(10),
+              ),
+              keyboardType: TextInputType.number,
+              // Restriction aux chiffres uniquement
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
+            ),
+
+            if (_errorMessage.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  _errorMessage,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+
+            const SizedBox(height: 20),
+
+            ourButton(
+              text: 'Verifier',
+              backgroundColor: blueColor,
+              textColor: whiteColor,
+              onPressed: verifyOtp,
+              isLoading: _isLoading,
+            ),
+
+            const SizedBox(height: 20),
+            ourButton(
+              text: 'Renvoyer le code',
+              backgroundColor: roscColor,
+              textColor: blackColor,
+              onPressed: resendOtp,
+              isLoading: _isLoading,
+            ),
+          ],
         ),
       ),
     );

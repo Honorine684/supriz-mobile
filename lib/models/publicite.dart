@@ -15,8 +15,8 @@ class Publicite {
     return Publicite(
       id: json['id'],
       pathImage: json['pathImage'],
-      sousCategorie: json['sous_categorie'],
-      categorie: json['categorie'],
+      sousCategorie: json['sous_categorie']?['id'],
+      categorie: json['sous_categorie']?['categorie']?['libelle_homme_categories'],
     );
   }
 }

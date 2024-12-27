@@ -1,0 +1,201 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter/material.dart';
+import 'package:supriz/screens/auth/login_screen.dart';
+import 'package:supriz/screens/auth/register_screen.dart';
+import '../consts/colors.dart';
+import '../consts/strings.dart';
+import '../screens/home/bottom_navigation.dart';
+
+class AuthService {
+
+  Future<void> registerUser(
+      String nom, String email, String numero, String password, BuildContext context, Function setLoading) async {
+    final url = Uri.parse('$domaineapi/register');
+
+    setLoading(true); // Début du chargement
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'nom': nom,
+          'prenom': '', // Le prénom n'est pas demandé dans le formulaire
+          'email': email,
+          'numero': numero,
+          'password': password,
+          'password_confirmation': password,
+        }),
+      );
+
+      setLoading(false); // Fin du chargement
+
+      if (response.statusCode == 200) {
+        // Inscription réussie
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Inscription réussie !'),
+            backgroundColor: blueColor,
+          ),
+        );
+        // Envoyer l'OTP
+        await sendOtpIns(email, context, setLoading);
+      } else {
+        // Gestion des erreurs
+        final responseData = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: ${responseData['message']}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (error) {
+      setLoading(false); // Fin du chargement
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur réseau: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> sendOtpIns(String email, BuildContext context, Function setLoading) async {
+    setLoading(true); // Début du chargement
+
+    final response = await http.post(
+      Uri.parse('$domaineapi/send-otp-mdp'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'user': email, // Assuming 'id_user' is the email in your case
+      }),
+    );
+
+    setLoading(false); // Fin du chargement
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('OTP envoyé avec succès'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => OtpScreen(email: email)),
+      );
+    } else {
+      final responseBody = jsonDecode(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(responseBody['message']),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> verifyOtp(String email, String otp, BuildContext context, Function setLoading) async {
+    setLoading(true); // Début du chargement
+
+    final response = await http.post(
+      Uri.parse('$domaineapi/verify-otp-compte'),
+      body: {
+        'user': email,
+        'otp': otp,
+      },
+    );
+
+    setLoading(false); // Fin du chargement
+
+    if (response.statusCode == 200) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => LoginScreen()),
+            (Route<dynamic> route) => false,
+      );
+    } else {
+      final responseBody = jsonDecode(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(responseBody['message']),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> resendOtp(String email, BuildContext context, Function setLoading) async {
+    await sendOtpIns(email, context, setLoading);
+  }
+
+  Future<void> loginUser(String email, String password, BuildContext context, Function setLoading) async {
+    setLoading(true); // Début du chargement
+
+    final url = Uri.parse('$domaineapi/login');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      setLoading(false); // Fin du chargement
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['status']) {
+          // Connexion réussie
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Connexion réussie !'),
+              backgroundColor: blueColor,
+            ),
+          );
+          // Rediriger vers la page d'accueil
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => BottomNavigation()),
+                (Route<dynamic> route) => false,
+          );
+        } else {
+          // Gestion des erreurs
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur: ${responseData['message']}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        final responseBody = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(responseBody['message']),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (error) {
+      setLoading(false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur réseau: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+}

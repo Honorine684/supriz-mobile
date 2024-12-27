@@ -23,21 +23,29 @@ class HomeScreen extends StatelessWidget {
   ];
 
   final List<Publicite> publicites = [
-    Publicite(id: 1, pathImage: crsImg1, sousCategorie: 0, categorie: "Pantalons"),
+    Publicite(
+        id: 1, pathImage: crsImg1, sousCategorie: 0, categorie: "Pantalons"),
     Publicite(id: 2, pathImage: crsImg2, sousCategorie: 1, categorie: "Jupes"),
     Publicite(id: 3, pathImage: crsImg3, sousCategorie: 2, categorie: "Robes"),
     Publicite(id: 4, pathImage: crsImg4, sousCategorie: 0, categorie: "Vestes"),
   ];
 
-
   final List<Map<String, dynamic>> gridItems = [
-    {"title": "Hommes", "image": produit1, "index": 0, "subCategory": "T-shirts"},
+    {
+      "title": "Hommes",
+      "image": produit1,
+      "index": 0,
+      "subCategory": "T-shirts"
+    },
     {"title": "Femmes", "image": produit2, "index": 1, "subCategory": "Robes"},
-    {"title": "Enfants", "image": produit3, "index": 2, "subCategory": "T-shirts"},
+    {
+      "title": "Enfants",
+      "image": produit3,
+      "index": 2,
+      "subCategory": "T-shirts"
+    },
     {"title": "Supriz", "image": produit4, "index": 3},
   ];
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +54,6 @@ class HomeScreen extends StatelessWidget {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-
 
     return Scaffold(
       backgroundColor: whiteColor,
@@ -88,10 +95,12 @@ class HomeScreen extends StatelessWidget {
                       if (item['index'] == 3) {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => SurprizScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => SurprizScreen()),
                         );
                       } else {
-                        onCategorySelected(item['index'], item['subCategory'] ?? "");
+                        onCategorySelected(
+                            item['index'], item['subCategory'] ?? "");
                       }
                     },
                     child: Stack(
@@ -110,7 +119,8 @@ class HomeScreen extends StatelessWidget {
                           left: 8,
                           child: Text(
                             item['title'],
-                            style: const TextStyle(color: whiteColor, fontSize: 16),
+                            style: const TextStyle(
+                                color: whiteColor, fontSize: 16),
                           ),
                         ),
                       ],
@@ -144,23 +154,28 @@ class HomeScreen extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.notifications_none, color: Colors.black),
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) =>
-              NotificationsScreen()
-            ),);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => NotificationsScreen()),
+            );
           },
         ),
         GestureDetector(
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) =>
-              ProfilScreen()
-            ),);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ProfilScreen()),
+            );
           },
           child: Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: CircleAvatar(
               backgroundColor: whiteColor,
               radius: 15,
-              child: Icon(Icons.account_circle, color: blackColor,),
+              child: Icon(
+                Icons.account_circle,
+                color: blackColor,
+              ),
             ),
           ),
         ),
@@ -183,7 +198,8 @@ class HomeScreen extends StatelessWidget {
         final publicite = publicites[index];
         return GestureDetector(
           onTap: () {
-            onCategorySelected(publicite.sousCategorie ?? 0, publicite.categorie ?? "");
+            onCategorySelected(
+                publicite.sousCategorie ?? 0, publicite.categorie ?? "");
           },
           child: Container(
             decoration: BoxDecoration(
@@ -216,7 +232,8 @@ class HomeScreen extends StatelessWidget {
         TextButton.icon(
           style: TextButton.styleFrom(
             backgroundColor: roscColor,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           onPressed: () {},
           icon: const Icon(Icons.history, size: 18, color: Colors.black),
