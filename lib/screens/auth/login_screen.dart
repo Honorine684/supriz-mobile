@@ -117,8 +117,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 TextButton(
                                   style: ButtonStyle(
-                                    padding: MaterialStateProperty.all(EdgeInsets.symmetric(horizontal: 10, vertical: 3)),
-                                    foregroundColor: MaterialStateProperty.all(blueColor),
+                                    padding: WidgetStateProperty.all(EdgeInsets.symmetric(horizontal: 10, vertical: 3)),
+                                    foregroundColor: WidgetStateProperty.all(blueColor),
                                   ),
                                   onPressed: () {
                                     Navigator.push(

@@ -7,6 +7,8 @@ import 'package:supriz/widgets/appbar_custom.dart';
 import '../../widgets/our_button.dart';
 
 class NotificationsScreen extends StatefulWidget {
+  const NotificationsScreen({super.key});
+
   @override
   _NotificationsScreenState createState() => _NotificationsScreenState();
 }

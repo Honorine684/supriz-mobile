@@ -3,7 +3,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../connection_checker.dart';
 import '../../consts/colors.dart';
 import '../../consts/images.dart';
 import '../../consts/strings.dart';
@@ -20,15 +19,11 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-
-
   @override
   void initState() {
     super.initState();
     _navigateBasedOnUserStatus(); // Gestion de la redirection
   }
-
-
 
   Future<void> _navigateBasedOnUserStatus() async {
     await Future.delayed(const Duration(seconds: 3));
@@ -39,6 +34,12 @@ class _SplashScreenState extends State<SplashScreen> {
     // Lire les valeurs des préférences
     final bool isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
     final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    final String? token = prefs.getString('token');
+
+    // Mettre à jour l'état de connexion en fonction de la présence du token
+    if (token != null) {
+      prefs.setBool('isLoggedIn', true);
+    }
 
     // Cas 1 : Première installation de l'application
     if (isFirstLaunch) {
@@ -61,7 +62,6 @@ class _SplashScreenState extends State<SplashScreen> {
         context,
         MaterialPageRoute(builder: (context) => BottomNavigation()),
       );
-
     }
   }
 

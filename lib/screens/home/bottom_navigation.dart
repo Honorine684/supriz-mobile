@@ -53,7 +53,6 @@ class _BottomNavigationState extends State<BottomNavigation> {
     final cartItemCount = cartProvider.distinctProductCount;
 
     return Scaffold(
-
       backgroundColor: Colors.white,
       body: _pages[_currentIndex],
       bottomNavigationBar: _buildBottomNavigationBar(screenHeight),

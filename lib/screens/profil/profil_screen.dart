@@ -179,7 +179,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: CustomAppBar(title: "Profil"),
+      appBar: const CustomAppBar(title: "Profil"),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -569,7 +569,7 @@ class _ChangeNumberScreenState extends State<ChangeNumberScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  Container(
+                  SizedBox(
                     width: 500,
                     child: ElevatedButton(
                       onPressed: () {},
@@ -698,7 +698,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
-                  Container(
+                  SizedBox(
                     width: 500,
                     child: ElevatedButton(
                       onPressed: () {},

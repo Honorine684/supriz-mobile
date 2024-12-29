@@ -59,8 +59,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 children: [
                   Image.asset(icAppLogo, height: 100),
-                  Text('Créer un compte sur $appname', style: TextStyle(color: whiteColor, fontSize: 18, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 10),
+                  const Text('Créer un compte sur $appname', style: TextStyle(color: whiteColor, fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
                   Card(
                     color: whiteColor,
                     elevation: 5,
@@ -71,8 +71,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       padding: const EdgeInsets.all(20.0),
                       child: Column(
                         children: [
-                          Text('Inscription', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                          SizedBox(height: 16),
+                          const Text('Inscription', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 16),
                           Form(
                             key: _formKey,
                             child: Column(
@@ -89,7 +89,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     return null;
                                   },
                                 ),
-                                SizedBox(height: 8),
+                                const SizedBox(height: 8),
 
                                 // Champ pour l'email
                                 customTextField(
@@ -107,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     return null;
                                   },
                                 ),
-                                SizedBox(height: 8),
+                                const SizedBox(height: 8),
 
                                 // Champ pour le numéro de téléphone
                                 customTextField(
@@ -125,7 +125,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   },
                                   keyboardType: TextInputType.number,
                                 ),
-                                SizedBox(height: 8),
+                                const SizedBox(height: 8),
 
                                 // Champ pour le mot de passe
                                 customTextField(
@@ -155,16 +155,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   },
                                 ),
 
-                                SizedBox(height: 8),
+                                const SizedBox(height: 8),
                                 // Bouton pour créer un compte
                                 ourButton(
                                   text: 'Creer un compte',
                                   onPressed: registerUser,
                                   isLoading: _isLoading, // Passer l'état de chargement
                                 ),
-                                SizedBox(height: 5),
-                                Text('ou'),
-                                SizedBox(height: 5),
+                                const SizedBox(height: 5),
+                                const Text('ou'),
+                                const SizedBox(height: 5),
                                 ourButton(
                                   text: 'Connexion',
                                   backgroundColor: roscColor,
@@ -172,7 +172,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   onPressed: () {
                                     Navigator.pushReplacement(
                                       context,
-                                      MaterialPageRoute(builder: (context) => LoginScreen()),
+                                      MaterialPageRoute(builder: (context) => const LoginScreen()),
                                     );
                                   },
                                 ),
@@ -204,7 +204,7 @@ class OtpScreen extends StatefulWidget {
 
 class _OtpScreenState extends State<OtpScreen> {
   final TextEditingController _otpController = TextEditingController();
-  String _errorMessage = '';
+  final String _errorMessage = '';
   bool _isLoading = false; // État de chargement
   final AuthService _authService = AuthService();
 
@@ -241,7 +241,7 @@ class _OtpScreenState extends State<OtpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: whiteColor,
-      appBar: CustomAppBar(title: 'Vérification OTP'),
+      appBar: const CustomAppBar(title: 'Vérification OTP'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -276,7 +276,7 @@ class _OtpScreenState extends State<OtpScreen> {
                 inactiveColor: Colors.grey,
                 activeColor: blueColor,
                 selectedColor: Colors.green,
-                fieldOuterPadding: EdgeInsets.all(10),
+                fieldOuterPadding: const EdgeInsets.all(10),
               ),
               keyboardType: TextInputType.number,
               // Restriction aux chiffres uniquement

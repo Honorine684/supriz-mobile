@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supriz/screens/auth/login_screen.dart';
 import 'package:supriz/screens/auth/register_screen.dart';
 import '../consts/colors.dart';
@@ -36,7 +37,7 @@ class AuthService {
       if (response.statusCode == 200) {
         // Inscription réussie
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Inscription réussie !'),
             backgroundColor: blueColor,
           ),
@@ -81,7 +82,7 @@ class AuthService {
 
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('OTP envoyé avec succès'),
           backgroundColor: Colors.green,
         ),
@@ -117,7 +118,7 @@ class AuthService {
     if (response.statusCode == 200) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
             (Route<dynamic> route) => false,
       );
     } else {
@@ -159,15 +160,21 @@ class AuthService {
         if (responseData['status']) {
           // Connexion réussie
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
               content: Text('Connexion réussie !'),
               backgroundColor: blueColor,
             ),
           );
+
+          // Stocker le token dans shared_preferences
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', responseData['token']);
+          await prefs.setBool('isLoggedIn', true);
+
           // Rediriger vers la page d'accueil
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => BottomNavigation()),
+            MaterialPageRoute(builder: (context) => const BottomNavigation()),
                 (Route<dynamic> route) => false,
           );
         } else {

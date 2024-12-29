@@ -7,14 +7,16 @@ import 'cart_item.dart';
 import 'cart_provider.dart';
 
 class PanierScreen extends StatelessWidget {
+  const PanierScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
 
     return Scaffold(
-      appBar: CustomAppBar(title: "Panier"),
+      appBar: const CustomAppBar(title: "Panier"),
       body: cartProvider.items.isEmpty
-          ? Center(child: Text('Votre panier est vide.'))
+          ? const Center(child: Text('Votre panier est vide.'))
           : ListView.builder(
               itemCount: cartProvider.items.length,
               itemBuilder: (ctx, index) {
