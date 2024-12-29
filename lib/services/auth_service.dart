@@ -205,4 +205,151 @@ class AuthService {
       );
     }
   }
+
+  Future<void> logoutUser(BuildContext context, Function setLoading) async {
+    setLoading(true); // Début du chargement
+
+    final url = Uri.parse('$domaineapi/logout');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${await _getToken()}',
+        },
+      );
+
+      setLoading(false); // Fin du chargement
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['status']) {
+          // Déconnexion réussie
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Déconnexion réussie !'),
+              backgroundColor: blueColor,
+            ),
+          );
+
+          // Supprimer le token des shared_preferences
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('token');
+          await prefs.setBool('isLoggedIn', false);
+
+          // Rediriger vers l'écran de connexion
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (Route<dynamic> route) => false,
+          );
+        } else {
+          // Gestion des erreurs
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur: ${responseData['message']}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        final responseBody = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(responseBody['message']),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (error) {
+      setLoading(false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur réseau: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> deleteUser(BuildContext context, Function setLoading) async {
+    setLoading(true); // Début du chargement
+
+    final url = Uri.parse('$domaineapi/dropUserInTable');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${await _getToken()}',
+        },
+        body: jsonEncode({
+          'id': await _getUserId(),
+        }),
+      );
+
+      setLoading(false); // Fin du chargement
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['status']) {
+          // Suppression réussie
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Compte supprimé avec succès !'),
+              backgroundColor: blueColor,
+            ),
+          );
+
+          // Supprimer le token des shared_preferences
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('token');
+          await prefs.setBool('isLoggedIn', false);
+
+          // Rediriger vers l'écran d'inscription
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                (Route<dynamic> route) => false,
+          );
+        } else {
+          // Gestion des erreurs
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur: ${responseData['message']}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        final responseBody = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(responseBody['message']),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (error) {
+      setLoading(false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur réseau: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<String> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token') ?? '';
+  }
+
+  Future<String> _getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userId') ?? '';
+  }
 }

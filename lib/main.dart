@@ -10,12 +10,17 @@ import 'connection_checker.dart';
 import 'consts/strings.dart';
 import 'consts/styles.dart';
 
+/*
 void main() => runApp(
   DevicePreview(
     enabled: !kReleaseMode,
-    builder: (context) => Supriz(), // Wrap your app
+    builder: (context) => Supriz(),
   ),
 );
+
+ */
+
+void main() => runApp(Supriz());
 
 class Supriz extends StatefulWidget {
   const Supriz({super.key});
@@ -30,7 +35,6 @@ class _SuprizState extends State<Supriz> {
   @override
   void initState() {
     super.initState();
-    /*
     connectionChecker = ConnectionChecker();
     connectionChecker.startConnectivityMonitor(onConnectionChanged: (hasInternet) {
       if (!hasInternet) {
@@ -39,8 +43,6 @@ class _SuprizState extends State<Supriz> {
         );
       }
     });
-
-     */
   }
 
   @override
@@ -64,7 +66,7 @@ class _SuprizState extends State<Supriz> {
         ),
         //home: BottomNavigation(),
         home: SplashScreen(),
-        //navigatorKey: connectionChecker.navigatorKey,
+        navigatorKey: connectionChecker.navigatorKey,
       ),
     );
   }

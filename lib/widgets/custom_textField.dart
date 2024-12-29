@@ -1,7 +1,7 @@
-import 'package:supriz/consts/consts.dart';
 import 'package:flutter/material.dart';
+import 'package:supriz/consts/consts.dart';
 
-/// Widget personnalisé pour un champ de texte avec un titre et des options configurables.
+/// Widget personnalisé pour un champ de texte avec un titre, un préfixe visible et des options configurables.
 Widget customTextField({
   required String title,
   required String hint,
@@ -11,6 +11,8 @@ Widget customTextField({
   String? Function(String?)? validator,
   EdgeInsetsGeometry contentPadding = const EdgeInsets.symmetric(vertical: 5.0),
   Widget? suffixIcon,
+  String? prefixText, // Préfixe textuel toujours visible
+  int? maxLength, // Limite optionnelle de caractères
 }) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,8 +52,19 @@ Widget customTextField({
             ),
           ),
           suffixIcon: suffixIcon,
+          // Modification ici pour le préfixe
+          prefixText: prefixText,
+          prefixStyle: const TextStyle(
+            fontSize: 16,
+            color: greyColor,
+            fontWeight: FontWeight.bold,
+          ),
+          // Ajout de ces lignes
+          filled: prefixText != null, // Active le remplissage si un préfixe existe
+          fillColor: Colors.transparent, // Couleur de remplissage transparente
         ),
         validator: validator,
+        maxLength: maxLength, // Limite de caractères
       ),
       const SizedBox(height: 17),
     ],

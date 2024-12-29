@@ -1,17 +1,70 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'dart:async';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
-import '../../consts/consts.dart';
+import '../../consts/images.dart';
+import '../../consts/strings.dart';
 import '../../widgets/appbar_custom.dart';
+
+const Color cloudColor = Color(0xFFE0E0E0);
+const Color grayColor = Color(0xFF9E9E9E);
 
 class AssistanceScreen extends StatefulWidget {
   const AssistanceScreen({super.key});
 
   @override
-  State<AssistanceScreen> createState() => _AssistanceScreenState();
+  _AssistanceScreenState createState() => _AssistanceScreenState();
 }
 
 class _AssistanceScreenState extends State<AssistanceScreen> {
+  Future<List<dynamic>>? _faqFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAndUpdateFAQs(); // Récupération initiale des FAQ
+  }
+
+  void _fetchAndUpdateFAQs() {
+    setState(() {
+      _faqFuture = fetchFaqs();
+    });
+  }
+
+  Future<List<dynamic>> fetchFaqs() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    print('Token stocké : $token');
+
+    final response = await http.get(
+      Uri.parse('$domaineapi/faq'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    print('URL de la requête : ${Uri.parse('$domaineapi/faq')}');
+    print('Réponse de l\'API : ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['status']) {
+        return data['faq'];
+      } else {
+        throw Exception('Aucune FAQ trouvée');
+      }
+    } else if (response.statusCode == 401) {
+      throw Exception('Authentification requise');
+    } else {
+      throw Exception(
+          'Erreur lors de la récupération des FAQ : ${response.statusCode} ${response.body}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,57 +72,57 @@ class _AssistanceScreenState extends State<AssistanceScreen> {
       appBar: CustomAppBar(title: "Aide"),
       body: Padding(
         padding: const EdgeInsets.all(10.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Image.asset(
-                logo,
-                height: 50,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Center(
-              child: Text(
-                'Comment pouvons nous vous aidez?',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: ListView(
+        child: FutureBuilder<List<dynamic>>(
+          future: _faqFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              print('Chargement en cours...');
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              print('Erreur : ${snapshot.error}');
+              return Center(child: Text('Erreur: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              print('Aucune FAQ disponible');
+              return const Center(child: Text('Aucune FAQ disponible'));
+            } else {
+              print('FAQ disponibles : ${snapshot.data!.length}');
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildQuestionItem(
-                    'Quelle est le but de l’application?',
-                    'Cette application vise à faciliter la tâche aux utilisateurs de vite trouver un cadeau pour un proche ou pour soi-même.',
+                  Center(
+                    child: Image.asset(
+                      logo,
+                      height: 50,
+                    ),
                   ),
-                  _buildQuestionItem(
-                    'Comment puis-je créer un compte?',
-                    "Pour créer un compte, cliquez sur le bouton d'inscription et suivez les instructions.",
+                  const SizedBox(height: 8),
+                  const Center(
+                    child: Text(
+                      'Comment pouvons-nous vous aider?',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                  _buildQuestionItem(
-                    'Quelle est le but de l’application?',
-                    'Cette application vise à faciliter la tâche aux utilisateurs de vite trouver un cadeau pour un proche ou pour soi-même.',
-                  ),
-                  _buildQuestionItem(
-                    'Comment puis-je créer un compte?',
-                    "Pour créer un compte, cliquez sur le bouton d'inscription et suivez les instructions.",
-                  ),
-                  _buildQuestionItem(
-                    'Quelle est le but de l’application?',
-                    'Cette application vise à faciliter la tâche aux utilisateurs de vite trouver un cadeau pour un proche ou pour soi-même.',
-                  ),
-                  _buildQuestionItem(
-                    'Comment puis-je créer un compte?',
-                    "Pour créer un compte, cliquez sur le bouton d'inscription et suivez les instructions.",
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: snapshot.data!.length,
+                      itemBuilder: (context, index) {
+                        final faq = snapshot.data![index];
+                        print('FAQ : $faq');
+                        return _buildQuestionItem(
+                          faq['asq'],
+                          faq['response'],
+                        );
+                      },
+                    ),
                   ),
                 ],
-              ),
-            ),
-          ],
+              );
+            }
+          },
         ),
       ),
     );
@@ -104,7 +157,7 @@ class _AssistanceScreenState extends State<AssistanceScreen> {
               children: [
                 const Text(
                   "R: ",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                 ),
                 Expanded(
                   child: Text(

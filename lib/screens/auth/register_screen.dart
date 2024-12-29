@@ -20,7 +20,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController(text: '');
   final TextEditingController passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
@@ -39,7 +39,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         phoneController.text,
         passwordController.text,
         context,
-            (bool isLoading) {
+        (bool isLoading) {
           setState(() {
             _isLoading = isLoading; // Mettre à jour l'état de chargement
           });
@@ -59,7 +59,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 children: [
                   Image.asset(icAppLogo, height: 100),
-                  const Text('Créer un compte sur $appname', style: TextStyle(color: whiteColor, fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text('Créer un compte sur $appname',
+                      style: TextStyle(
+                          color: whiteColor,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
                   Card(
                     color: whiteColor,
@@ -71,7 +75,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       padding: const EdgeInsets.all(20.0),
                       child: Column(
                         children: [
-                          const Text('Inscription', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                          const Text('Inscription',
+                              style: TextStyle(
+                                  fontSize: 20, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 16),
                           Form(
                             key: _formKey,
@@ -101,7 +107,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     if (value == null || value.isEmpty) {
                                       return 'Ce champ est requis';
                                     }
-                                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                                        .hasMatch(value)) {
                                       return 'Entrez un email valide';
                                     }
                                     return null;
@@ -111,20 +118,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                                 // Champ pour le numéro de téléphone
                                 customTextField(
-                                  controller: phoneController,
-                                  hint: "Entrez votre numéro de téléphone",
                                   title: "Numéro de téléphone",
+                                  hint: "Entrez votre numéro de téléphone",
+                                  controller: phoneController,
+                                  keyboardType: TextInputType.number,
+                                  prefixText:
+                                      "+229 01 ", // Préfixe toujours visible
+                                  maxLength: 8, // Limite à 8 chiffres
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Ce champ est requis';
                                     }
-                                    if (!RegExp(r'^\+?\d{10,15}$').hasMatch(value)) {
-                                      return 'Entrez un numéro valide';
+                                    if (!RegExp(r'^\d+$').hasMatch(value)) {
+                                      return 'Entrez un numéro valide de 8 chiffres';
                                     }
                                     return null;
                                   },
-                                  keyboardType: TextInputType.number,
                                 ),
+
                                 const SizedBox(height: 8),
 
                                 // Champ pour le mot de passe
@@ -134,10 +145,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   title: "Mot de passe",
                                   obscureText: !_isPasswordVisible,
                                   suffixIcon: IconButton(
-                                    icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off, color: greyColor),
+                                    icon: Icon(
+                                        _isPasswordVisible
+                                            ? Icons.visibility
+                                            : Icons.visibility_off,
+                                        color: greyColor),
                                     onPressed: () {
                                       setState(() {
-                                        _isPasswordVisible = !_isPasswordVisible;
+                                        _isPasswordVisible =
+                                            !_isPasswordVisible;
                                       });
                                     },
                                   ),
@@ -148,7 +164,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     if (value.length < 8) {
                                       return 'Le mot de passe doit contenir au moins 8 caractères';
                                     }
-                                    if (!RegExp(r'^(?=.*[A-Z]).+$').hasMatch(value)) {
+                                    if (!RegExp(r'^(?=.*[A-Z]).+$')
+                                        .hasMatch(value)) {
                                       return 'Le mot de passe doit contenir au moins une lettre majuscule';
                                     }
                                     return null;
@@ -160,7 +177,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ourButton(
                                   text: 'Creer un compte',
                                   onPressed: registerUser,
-                                  isLoading: _isLoading, // Passer l'état de chargement
+                                  isLoading:
+                                      _isLoading, // Passer l'état de chargement
                                 ),
                                 const SizedBox(height: 5),
                                 const Text('ou'),
@@ -172,7 +190,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   onPressed: () {
                                     Navigator.pushReplacement(
                                       context,
-                                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              const LoginScreen()),
                                     );
                                   },
                                 ),
@@ -284,7 +304,6 @@ class _OtpScreenState extends State<OtpScreen> {
                 FilteringTextInputFormatter.digitsOnly,
               ],
             ),
-
             if (_errorMessage.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -293,9 +312,7 @@ class _OtpScreenState extends State<OtpScreen> {
                   style: const TextStyle(color: Colors.red),
                 ),
               ),
-
             const SizedBox(height: 20),
-
             ourButton(
               text: 'Verifier',
               backgroundColor: blueColor,
@@ -303,7 +320,6 @@ class _OtpScreenState extends State<OtpScreen> {
               onPressed: verifyOtp,
               isLoading: _isLoading,
             ),
-
             const SizedBox(height: 20),
             ourButton(
               text: 'Renvoyer le code',

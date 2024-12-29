@@ -1,9 +1,8 @@
-
 // ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';
 import 'package:supriz/consts/consts.dart';
-
+import '../../services/auth_service.dart';
 import '../../widgets/appbar_custom.dart';
 
 class ParametresScreen extends StatefulWidget {
@@ -15,9 +14,17 @@ class ParametresScreen extends StatefulWidget {
 
 class _ParametresScreenState extends State<ParametresScreen> {
   bool _showingDialog = false;
+  bool _isLoading = false;
+
+  void setLoading(bool isLoading) {
+    setState(() {
+      _isLoading = isLoading;
+    });
+  }
 
   void _showConfirmationDialog(
-      BuildContext context, String message, Function onConfirm, {bool isDeleteAccount = false}) {
+      BuildContext context, String message, Function onConfirm,
+      {bool isDeleteAccount = false}) {
     setState(() {
       _showingDialog = true;
     });
@@ -69,7 +76,9 @@ class _ParametresScreenState extends State<ParametresScreen> {
                       },
                       child: Text(
                         'Oui',
-                        style: TextStyle(fontSize: 16, color: isDeleteAccount ? Colors.red : Colors.black),
+                        style: TextStyle(
+                            fontSize: 16,
+                            color: isDeleteAccount ? Colors.red : Colors.black),
                       ),
                     ),
                   ],
@@ -91,7 +100,7 @@ class _ParametresScreenState extends State<ParametresScreen> {
       context,
       "Souhaitez-vous vraiment vous déconnecter ?",
           () {
-
+        AuthService().logoutUser(context, setLoading);
       },
     );
   }
@@ -101,7 +110,7 @@ class _ParametresScreenState extends State<ParametresScreen> {
       context,
       "Souhaitez-vous vraiment supprimer votre compte ?",
           () {
-
+        AuthService().deleteUser(context, setLoading);
       },
       isDeleteAccount: true,
     );
@@ -139,12 +148,14 @@ class _ParametresScreenState extends State<ParametresScreen> {
             context,
             PageRouteBuilder(
               pageBuilder: (context, animation, secondaryAnimation) => action,
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
                 const begin = Offset(1.0, 0.0);
                 const end = Offset.zero;
                 const curve = Curves.ease;
 
-                var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                var tween = Tween(begin: begin, end: end)
+                    .chain(CurveTween(curve: curve));
                 var offsetAnimation = animation.drive(tween);
 
                 return SlideTransition(
@@ -192,8 +203,7 @@ class _ParametresScreenState extends State<ParametresScreen> {
                 SizedBox(height: spacing),
                 _buildLanguageRow(context),
                 SizedBox(height: spacing / 2),
-                _buildInfoRow(
-                    context, "Notifications", ()),
+                _buildInfoRow(context, "Notifications", ()),
                 SizedBox(height: spacing / 2),
                 _buildInfoRow(
                     context, "Conditions Générales", const CondicUtilisation()),
@@ -201,11 +211,9 @@ class _ParametresScreenState extends State<ParametresScreen> {
                 _buildInfoRow(context, "Politiques de Confidentialité",
                     const PolitiquesScreen()),
                 SizedBox(height: spacing / 2),
-                _buildInfoRow(
-                    context, "Historiques", ()),
+                _buildInfoRow(context, "Historiques", ()),
                 SizedBox(height: spacing / 2),
-                _buildInfoRow(
-                    context, "Modifier mon profil", ()),
+                _buildInfoRow(context, "Modifier mon profil", ()),
                 SizedBox(height: spacing / 2),
                 _buildInfoRow(context, "Supprimer mon compte",
                         () => _showDeleteAccountDialog(context)),
@@ -219,6 +227,12 @@ class _ParametresScreenState extends State<ParametresScreen> {
           if (_showingDialog)
             Positioned(
               child: Container(color: Colors.black.withOpacity(0.2)),
+            ),
+          if (_isLoading)
+            Positioned.fill(
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
             ),
         ],
       ),
@@ -383,7 +397,6 @@ class CondicUtilisation extends StatelessWidget {
   }
 }
 
-
 class PolitiquesScreen extends StatelessWidget {
   const PolitiquesScreen({super.key});
 
@@ -401,7 +414,7 @@ class PolitiquesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: CustomAppBar(title: "Conditions Générales"),
+      appBar: CustomAppBar(title: "Politique de Confidentialité"),
       body: const SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
         child: Column(
@@ -520,12 +533,11 @@ class Section extends StatelessWidget {
         Text(title, style: PolitiquesScreen.titleStyle),
         const SizedBox(height: 8),
         ...texts.map((text) => Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: NormalText(text),
-        )),
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: NormalText(text),
+            )),
         const SizedBox(height: 16),
       ],
     );
   }
 }
-
