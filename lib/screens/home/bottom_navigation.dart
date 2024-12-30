@@ -2,11 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import '../../consts/consts.dart';
 import '../assistance/assistance_screen.dart';
-import '../panier/cart_provider.dart';
+import '../panier/cart_controller.dart'; // Assurez-vous d'importer le bon fichier
 import '../panier/panier_screen.dart';
 import '../parametres/parametres_screen.dart';
 import '../produits/produits_screen.dart';
@@ -50,14 +49,16 @@ class _BottomNavigationState extends State<BottomNavigation> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final cartProvider = Provider.of<CartProvider>(context);
-    final cartItemCount = cartProvider.distinctProductCount;
+    final cartController = Get.find<CartController>();
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: _pages[_currentIndex],
       bottomNavigationBar: _buildBottomNavigationBar(screenHeight),
-      floatingActionButton: _buildFloatingActionButton(cartItemCount),
+      floatingActionButton: Obx(() {
+        final cartItemCount = cartController.distinctProductCount;
+        return _buildFloatingActionButton(cartItemCount);
+      }),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
@@ -146,8 +147,8 @@ class _BottomNavigationState extends State<BottomNavigation> {
         ),
         if (cartItemCount > 0)
           Positioned(
-            right: -5,
-            top: -1,
+            right: 7,
+            top: 10,
             child: Container(
               width: 20,
               height: 20,

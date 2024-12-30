@@ -26,6 +26,11 @@ class CartController extends GetxController {
     await fetchAchats();
   }
 
+  static String _getFullImageUrl(String path) {
+    const String baseUrl = '$domaineapiImage/';  // Remplacez par votre domaine de base
+    return baseUrl + path;
+  }
+
   Future<void> fetchAchats() async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -53,7 +58,7 @@ class CartController extends GetxController {
             info: achat['product']['info'],
             images: [achat['product']['photo_main'], achat['product']['photo_secondary']]
                 .where((image) => image != null)
-                .map((image) => image as String)
+                .map((image) => _getFullImageUrl(image as String))
                 .toList(),
             personnalisable: achat['product']['personnalisable'],
             statut: achat['product']['statut'],
@@ -79,7 +84,6 @@ class CartController extends GetxController {
         final index = cartItems.indexWhere((item) => item['product'] == product);
         if (index >= 0) {
           cartItems[index]['quantity'] += quantity;
-          cartItems.refresh();
         } else {
           cartItems.add({
             'product': product,
@@ -88,6 +92,7 @@ class CartController extends GetxController {
             'achat_id': response['achat_id']
           });
         }
+        update(); // Notifier les écouteurs des changements
       } else {
         print('Error adding to cart');
       }
@@ -100,7 +105,7 @@ class CartController extends GetxController {
     final index = cartItems.indexWhere((item) => item['product'] == product);
     if (index >= 0 && quantity > 0) {
       cartItems[index]['quantity'] = quantity;
-      cartItems.refresh();
+      update(); // Notifier les écouteurs des changements
 
       String? token = await _getAuthToken();
 
@@ -145,6 +150,7 @@ class CartController extends GetxController {
         final responseBody = jsonDecode(response.body);
         if (response.statusCode == 200 && responseBody['status']) {
           cartItems.removeAt(index);
+          update(); // Notifier les écouteurs des changements
         } else {
           print('Erreur lors de la suppression de l\'article : ${responseBody['message']}');
         }
@@ -158,7 +164,7 @@ class CartController extends GetxController {
 
   void toggleItemSelected(int index) {
     cartItems[index]['isSelected'] = !(cartItems[index]['isSelected'] ?? false);
-    cartItems.refresh();
+    update(); // Notifier les écouteurs des changements
   }
 
   void selectAllItems() {
@@ -166,7 +172,7 @@ class CartController extends GetxController {
     for (var item in cartItems) {
       item['isSelected'] = !allSelected;
     }
-    cartItems.refresh();
+    update(); // Notifier les écouteurs des changements
   }
 
   void deleteSelectedItems() async {
@@ -195,12 +201,14 @@ class CartController extends GetxController {
 
     if (response.statusCode == 200) {
       cartItems.removeWhere((item) => item['isSelected'] == true);
-      update();
+      update(); // Notifier les écouteurs des changements
       print('Les articles sélectionnés ont été supprimés avec succès');
     } else {
       print('Erreur lors de la suppression des articles : ${response.body}');
     }
   }
+
+  int get distinctProductCount => cartItems.length;
 
   double get totalAmount {
     return cartItems.fold(0.0, (sum, item) {

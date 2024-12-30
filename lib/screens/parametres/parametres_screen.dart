@@ -195,14 +195,6 @@ class _ParametresScreenState extends State<ParametresScreen> {
     double spacing = 20.0;
 
 
-    /*
-              onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => NotificationScreen()),
-            );
-          },
-     */
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: CustomAppBar(title: "Paramètres"),

@@ -15,7 +15,10 @@ class ProduitScreen extends StatefulWidget {
   final int initialCategoryIndex;
   final String initialSubCategory;
 
-  const ProduitScreen({super.key, required this.initialCategoryIndex, required this.initialSubCategory});
+  const ProduitScreen(
+      {super.key,
+      required this.initialCategoryIndex,
+      required this.initialSubCategory});
 
   @override
   _ProduitScreenState createState() => _ProduitScreenState();
@@ -55,8 +58,11 @@ class _ProduitScreenState extends State<ProduitScreen> {
   Future<void> _loadSubCategories(int categoryId) async {
     try {
       _subCategories = await _productService.fetchSubCategories(categoryId);
-      _activeSubCategory = _subCategories.isNotEmpty ? _subCategories[0]['name_sous_categories'] : '';
-      _loadProducts(_categories[_activeCategoryIndex]['name_id_categories'], _activeSubCategory);
+      _activeSubCategory = _subCategories.isNotEmpty
+          ? _subCategories[0]['name_sous_categories']
+          : '';
+      _loadProducts(_categories[_activeCategoryIndex]['name_id_categories'],
+          _activeSubCategory);
     } catch (e) {
       setState(() {
         _isError = true;
@@ -64,13 +70,15 @@ class _ProduitScreenState extends State<ProduitScreen> {
     }
   }
 
-  Future<void> _loadProducts(String categoryName, String subCategoryName) async {
+  Future<void> _loadProducts(
+      String categoryName, String subCategoryName) async {
     setState(() {
       _isLoading = true;
       _isError = false;
     });
     try {
-      _products = await _productService.fetchProducts(categoryName, subCategoryName);
+      _products =
+          await _productService.fetchProducts(categoryName, subCategoryName);
       setState(() {
         _isLoading = false;
       });
@@ -114,7 +122,9 @@ class _ProduitScreenState extends State<ProduitScreen> {
                           label: Text(
                             _categories[index]['libelle_homme_categories'],
                             style: TextStyle(
-                              color: _activeCategoryIndex == index ? Colors.black : Colors.white,
+                              color: _activeCategoryIndex == index
+                                  ? Colors.black
+                                  : Colors.white,
                             ),
                           ),
                           selected: _activeCategoryIndex == index,
@@ -155,10 +165,14 @@ class _ProduitScreenState extends State<ProduitScreen> {
                       label: Text(
                         subCategory['name_sous_categories'],
                         style: TextStyle(
-                          color: _activeSubCategory == subCategory['name_sous_categories'] ? Colors.white : Colors.black,
+                          color: _activeSubCategory ==
+                                  subCategory['name_sous_categories']
+                              ? Colors.white
+                              : Colors.black,
                         ),
                       ),
-                      selected: _activeSubCategory == subCategory['name_sous_categories'],
+                      selected: _activeSubCategory ==
+                          subCategory['name_sous_categories'],
                       selectedColor: blueColor,
                       backgroundColor: roscColor,
                       showCheckmark: false,
@@ -171,8 +185,12 @@ class _ProduitScreenState extends State<ProduitScreen> {
                       ),
                       onSelected: (bool selected) {
                         setState(() {
-                          _activeSubCategory = subCategory['name_sous_categories'];
-                          _loadProducts(_categories[_activeCategoryIndex]['name_id_categories'], _activeSubCategory);
+                          _activeSubCategory =
+                              subCategory['name_sous_categories'];
+                          _loadProducts(
+                              _categories[_activeCategoryIndex]
+                                  ['name_id_categories'],
+                              _activeSubCategory);
                         });
                       },
                     ),
@@ -196,7 +214,8 @@ class _ProduitScreenState extends State<ProduitScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(32),
                     ),
-                    contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                   ),
                   onChanged: (value) {
                     setState(() {
@@ -210,8 +229,8 @@ class _ProduitScreenState extends State<ProduitScreen> {
               child: _isLoading
                   ? Center(child: CircularProgressIndicator())
                   : _isError
-                  ? Center(child: Text('Erreur de chargement des données'))
-                  : _buildProductList(),
+                      ? Center(child: Text('Erreur de chargement des données'))
+                      : _buildProductList(),
             ),
           ],
         ),
@@ -223,7 +242,10 @@ class _ProduitScreenState extends State<ProduitScreen> {
     List<Product> products = _products;
 
     if (_searchQuery.isNotEmpty) {
-      products = products.where((product) => product.title.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+      products = products
+          .where((product) =>
+              product.title.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .toList();
     }
 
     if (products.isEmpty) {
@@ -266,10 +288,6 @@ class _ProduitScreenState extends State<ProduitScreen> {
                         height: 130,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) =>
-                        loadingProgress == null ? child : CircularProgressIndicator(),
-                        errorBuilder: (context, error, stackTrace) =>
-                            Icon(Icons.error_outline),
                       ),
                     ),
                   ),
@@ -300,7 +318,7 @@ class _ProduitScreenState extends State<ProduitScreen> {
                   Row(
                     children: List.generate(
                       5,
-                          (index) {
+                      (index) {
                         return Icon(
                           index < product.evaluation
                               ? Icons.star
@@ -321,16 +339,17 @@ class _ProduitScreenState extends State<ProduitScreen> {
   }
 
   void addToCart(Product product, int quantity, String personalization) {
-    Provider.of<CartProvider>(context, listen: false).addToCart(product, quantity, personalization);
+    Provider.of<CartProvider>(context, listen: false)
+        .addToCart(product, quantity, personalization);
     Navigator.of(context).pop();
   }
-
 
   void showProductDialog(Product product) {
     int quantity = 1;
     int current = 0;
     bool showFullDescription = false;
     TextEditingController personalizationController = TextEditingController();
+    String errorMessage = '';
 
     showDialog(
       context: context,
@@ -373,9 +392,13 @@ class _ProduitScreenState extends State<ProduitScreen> {
                                           fit: BoxFit.cover,
                                           width: double.infinity,
                                           height: 230,
-                                          loadingBuilder: (context, child, loadingProgress) =>
-                                          loadingProgress == null ? child : CircularProgressIndicator(),
-                                          errorBuilder: (context, error, stackTrace) =>
+                                          loadingBuilder: (context, child,
+                                              loadingProgress) =>
+                                          loadingProgress == null
+                                              ? child
+                                              : CircularProgressIndicator(),
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
                                               Icon(Icons.error_outline),
                                         );
                                       },
@@ -443,7 +466,8 @@ class _ProduitScreenState extends State<ProduitScreen> {
                                     ),
                                     child: Text(
                                       "Durée: ${product.info}",
-                                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                                      style: const TextStyle(
+                                          color: Colors.white, fontSize: 12),
                                     ),
                                   ),
                                 ),
@@ -462,7 +486,8 @@ class _ProduitScreenState extends State<ProduitScreen> {
                                   ),
                                   child: Text(
                                     "Livraison: ${product.prixLivraison}",
-                                    style: const TextStyle(fontSize: 12, color: Colors.white),
+                                    style: const TextStyle(
+                                        fontSize: 12, color: Colors.white),
                                   ),
                                 ),
                               ),
@@ -616,30 +641,53 @@ class _ProduitScreenState extends State<ProduitScreen> {
                                     ),
                                   ),
                                 ),
+                                if (errorMessage.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 5.0),
+                                    child: Text(
+                                      errorMessage,
+                                      style: const TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
                           const SizedBox(height: 10),
                           ourButton(
                             text: "Ajouter au panier",
-                            onPressed: () {
+                            onPressed: () async {
                               if (product.personnalisable == "yes" &&
                                   personalizationController.text.isEmpty) {
                                 setState(() {
-                                  errorMessage = "Veuillez entrer votre personnalisation.";
+                                  errorMessage =
+                                  "Veuillez entrer votre personnalisation.";
                                 });
                               } else {
                                 setState(() {
                                   errorMessage = '';
                                 });
                                 try {
-                                  Provider.of<CartProvider>(context, listen: false).addToCart(product, quantity, personalizationController.text);
+                                  await Provider.of<CartProvider>(context,
+                                      listen: false)
+                                      .addToCart(product, quantity,
+                                      personalizationController.text);
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Produit ajouté au panier')),
+                                    SnackBar(
+                                        content:
+                                        Text('Produit ajouté au panier')),
                                   );
+                                  Navigator.of(context).pop(); // Fermeture du dialogue
                                 } catch (e) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Erreur lors de l\'ajout au panier')),
+                                    SnackBar(
+                                        content: Text(
+                                            'Erreur lors de l\'ajout au panier')),
                                   );
+                                } finally {
+                                  setState(() {
+                                  });
                                 }
                               }
                             },
@@ -658,4 +706,5 @@ class _ProduitScreenState extends State<ProduitScreen> {
       },
     );
   }
+
 }
