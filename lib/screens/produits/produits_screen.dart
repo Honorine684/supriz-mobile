@@ -31,6 +31,7 @@ class _ProduitScreenState extends State<ProduitScreen> {
   bool _isLoading = true;
   bool _isError = false;
   final ProductService _productService = ProductService();
+  String errorMessage = '';
 
   @override
   void initState() {
@@ -318,6 +319,12 @@ class _ProduitScreenState extends State<ProduitScreen> {
       },
     );
   }
+
+  void addToCart(Product product, int quantity, String personalization) {
+    Provider.of<CartProvider>(context, listen: false).addToCart(product, quantity, personalization);
+    Navigator.of(context).pop();
+  }
+
 
   void showProductDialog(Product product) {
     int quantity = 1;
@@ -615,15 +622,30 @@ class _ProduitScreenState extends State<ProduitScreen> {
                           ourButton(
                             text: "Ajouter au panier",
                             onPressed: () {
-                              // Logique pour ajouter le produit au panier avec la quantité
-                              Provider.of<CartProvider>(context, listen: false).addToCart(product, quantity);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Produit ajouté au panier')),
-                              );
+                              if (product.personnalisable == "yes" &&
+                                  personalizationController.text.isEmpty) {
+                                setState(() {
+                                  errorMessage = "Veuillez entrer votre personnalisation.";
+                                });
+                              } else {
+                                setState(() {
+                                  errorMessage = '';
+                                });
+                                try {
+                                  Provider.of<CartProvider>(context, listen: false).addToCart(product, quantity, personalizationController.text);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Produit ajouté au panier')),
+                                  );
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Erreur lors de l\'ajout au panier')),
+                                  );
+                                }
+                              }
                             },
                             suffixIcon: Icons.add_shopping_cart,
                             backgroundColor: vertpan,
-                          )
+                          ),
                         ],
                       ),
                     ),

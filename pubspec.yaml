@@ -28,6 +28,14 @@ dependencies:
   lottie: ^3.2.0
 
   http: any
+  flutter_secure_storage: ^9.2.2
+  image_picker: ^1.1.2
+  flutter_local_notifications: ^18.0.1
+  velocity_x: ^4.2.1
+  webview_flutter: ^4.10.0
+  intl: ^0.19.0
+  get: ^4.6.6
+  intl_phone_field: ^3.2.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

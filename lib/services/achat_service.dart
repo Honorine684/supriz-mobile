@@ -8,7 +8,7 @@ import '../models/achat.dart';
 class AchatService {
   Future<String?> _getAuthToken() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('authToken');
+    return prefs.getString('token');
   }
 
   Future<List<Achat>> fetchAchats() async {

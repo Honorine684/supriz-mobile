@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../consts/consts.dart';
 import '../assistance/assistance_screen.dart';
 import '../panier/cart_provider.dart';

@@ -2,10 +2,12 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:supriz/screens/panier/cart_controller.dart';
 import 'package:supriz/screens/panier/cart_provider.dart';
 import 'package:supriz/screens/splash/splash_screen.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import 'connection_checker.dart';
 import 'consts/strings.dart';
 import 'consts/styles.dart';
@@ -20,7 +22,11 @@ void main() => runApp(
 
  */
 
-void main() => runApp(Supriz());
+void main() {
+  Get.lazyPut<CartController>(() => CartController());
+  runApp(const Supriz());
+}
+
 
 class Supriz extends StatefulWidget {
   const Supriz({super.key});
@@ -53,9 +59,11 @@ class _SuprizState extends State<Supriz> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (ctx) => CartProvider(),
-      child: MaterialApp(
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (ctx) => CartProvider()),
+      ],
+      child: GetMaterialApp(
         debugShowCheckedModeBanner: false,
         title: appname,
         theme: ThemeData(
@@ -64,7 +72,9 @@ class _SuprizState extends State<Supriz> {
           fontFamily: regular,
           useMaterial3: true,
         ),
-        //home: BottomNavigation(),
+        initialBinding: BindingsBuilder(() {
+          Get.put(CartController());
+        }),
         home: SplashScreen(),
         navigatorKey: connectionChecker.navigatorKey,
       ),

@@ -11,6 +11,7 @@ import '../screens/auth/reset_pwd.dart';
 import '../screens/home/bottom_navigation.dart';
 
 class AuthService {
+  // ... autres méthodes existantes ...
 
   Future<void> registerUser(
       String nom, String email, String numero, String password, BuildContext context, Function setLoading) async {
@@ -91,7 +92,7 @@ class AuthService {
       );
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => OtpScreen(email: email)),
+        MaterialPageRoute(builder: (context) => OTPScreen(email: email)),
       );
     } else {
       final responseBody = jsonDecode(response.body);
@@ -172,6 +173,9 @@ class AuthService {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('token', responseData['token']);
           await prefs.setBool('isLoggedIn', true);
+          await prefs.setString('name', responseData['name']); // Stocker le nom de l'utilisateur
+          await prefs.setString('numero', responseData['numero']); // Stocker le numéro de l'utilisateur
+          await prefs.setString('email', responseData['email']); // Stocker l'email de l'utilisateur
 
           // Rediriger vers la page d'accueil
           Navigator.pushAndRemoveUntil(
@@ -206,6 +210,21 @@ class AuthService {
         ),
       );
     }
+  }
+
+  Future<String> getUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('name') ?? 'Invité';
+  }
+
+  Future<String> getUserNumero() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('numero') ?? '';
+  }
+
+  Future<String> getUserEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('email') ?? '';
   }
 
   Future<void> logoutUser(BuildContext context, Function setLoading) async {

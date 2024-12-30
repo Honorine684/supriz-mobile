@@ -1,8 +1,13 @@
+// ignore_for_file: prefer_const_constructors
+
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supriz/consts/consts.dart';
-import 'package:supriz/widgets/appbar_custom.dart';
+import 'package:supriz/services/profil_service.dart';
+import '../../widgets/appbar_custom.dart';
 
 class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});
@@ -12,18 +17,27 @@ class ProfilScreen extends StatefulWidget {
 }
 
 class _ProfilScreenState extends State<ProfilScreen> {
+
+  String? storedFirstname;
+  String? storedName;    // Récupère le prénom depuis les prefs
+  String? storedNumero;  // Récupère le prénom depuis les prefs
+  String? storedEmail;
+  String? storedImage;
   bool _showingDialog = false;
   File? _profileImage;
 
   @override
   void initState() {
     super.initState();
+    _chargeInfo();
     _loadProfileImage();
   }
 
   Future<void> _loadProfileImage() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    // Récupère le prénom depuis les prefs
     String? imagePath = prefs.getString('profileImagePath');
+
     if (imagePath != null) {
       setState(() {
         _profileImage = File(imagePath);
@@ -109,7 +123,6 @@ class _ProfilScreenState extends State<ProfilScreen> {
       context,
       "Modifier la photo de profil",
           () async {
-        /*
         final result = await Navigator.of(context).push(
           MaterialPageRoute(builder: (context) => ChangePhotoScreen(image: _profileImage)),
         );
@@ -119,7 +132,6 @@ class _ProfilScreenState extends State<ProfilScreen> {
           });
           _saveProfileImage(result.path);
         }
-         */
       },
     );
   }
@@ -127,7 +139,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
   void _showEditUsernameDialog(BuildContext context) {
     _showConfirmationDialog(
       context,
-      "Modifier le nom et le prenom",
+      "Modifier le nom d'utilisateur",
           () {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (context) => const ChangeNomPrenomScreen()),
@@ -172,14 +184,38 @@ class _ProfilScreenState extends State<ProfilScreen> {
     );
   }
 
+  Future<void> _chargeInfo() async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      storedFirstname = prefs.getString('firstname');
+      storedName = prefs.getString('name'); // Récupère le prénom depuis les prefs
+      storedNumero = prefs.getString('numero'); // Récupère le prénom depuis les prefs
+      storedEmail = prefs.getString('email');
+      storedImage = prefs.getString('profileImagePath');
+    });
+
+  }
+
+
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context)  {
+
+
     double profileImageSize = MediaQuery.of(context).size.width * 0.3;
     double spacing = 20.0;
 
+    @override
+    void initState() {
+      super.initState();
+      _chargeInfo();
+      _loadProfileImage();
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: const CustomAppBar(title: "Profil"),
+      appBar: CustomAppBar(title: "Profil"),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -223,19 +259,19 @@ class _ProfilScreenState extends State<ProfilScreen> {
                   ],
                 ),
                 SizedBox(height: spacing / 2),
-                const Text(
-                  "John Doe",
+                Text(
+                  "${storedName![0].toUpperCase() + storedName!.substring(1)}",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 SizedBox(height: spacing),
-                _buildInfoRow(context, "Nom et Prenom", "John Doe", _showEditUsernameDialog),
+                _buildInfoRow(context, "Nom d'utilisateur", "${storedName![0].toUpperCase() + storedName!.substring(1)}", _showEditUsernameDialog),
                 SizedBox(height: spacing / 2),
-                _buildInfoRow(context, 'Numéro', "**********", _showEditNumberDialog),
+                _buildInfoRow(context, 'Numéro', "$storedNumero", _showEditNumberDialog),
                 SizedBox(height: spacing / 2),
-                _buildInfoRow(context, 'Email', "john.doe@gmail.com", _showEditEmailDialog),
+                _buildInfoRow(context, 'Email', "$storedEmail", _showEditEmailDialog),
                 SizedBox(height: spacing / 2),
                 _buildInfoRow(context, 'Mot de passe', '********', _showEditPasswordDialog),
               ],
@@ -274,7 +310,6 @@ class _ProfilScreenState extends State<ProfilScreen> {
   }
 }
 
-
 class ChangeEmailScreen extends StatefulWidget {
   const ChangeEmailScreen({super.key});
 
@@ -284,35 +319,22 @@ class ChangeEmailScreen extends StatefulWidget {
 
 class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
   final TextEditingController emailController = TextEditingController();
+  final ProfilService _ProfilService = ProfilService();// Récupère le prénom depuis les prefs
+  String? storedEmail;
+  void _chargeInfo() async {
 
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      storedEmail = prefs.getString('email');
+    });
+
+  }
   @override
   Widget build(BuildContext context) {
+    _chargeInfo();
     return Scaffold(
       backgroundColor: whiteColor,
-      appBar: AppBar(
-        flexibleSpace: Image.asset(
-          appbarImg,
-          fit: BoxFit.cover,
-        ),
-        title: const Text(
-          'Profil',
-          style: TextStyle(
-            color: whiteColor,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          color: whiteColor,
-          icon: const Icon(
-            Icons.arrow_back,
-            size: 28,
-          ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
+      appBar: CustomAppBar(title: "Profil"),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -334,8 +356,8 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                       color: cloudColor,
                       borderRadius: BorderRadius.circular(8.0),
                     ),
-                    child: const Text(
-                      "Email: changeme@changeme.com",
+                    child: Text(
+                      "Email: $storedEmail",
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -356,7 +378,9 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                   SizedBox(
                     width: 500,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        _updateEmail();
+                      },
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.white,
                         backgroundColor: blueColor,
@@ -376,6 +400,30 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
       ),
     );
   }
+
+  void _updateEmail() async {
+    try {
+      final response = await _ProfilService.updateEmail(emailController.text);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email mis à jour avec succès'),
+        ),
+      );
+
+
+      Navigator.of(context).pop(true);
+      //Navigator.of(context).push(
+      //MaterialPageRoute(builder: (context) => const ProfilScreen()),
+      //);
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de la mise à jour de l\'email: $e'),
+        ),
+      );
+    }
+  }
 }
 
 class ChangeNomPrenomScreen extends StatefulWidget {
@@ -386,13 +434,32 @@ class ChangeNomPrenomScreen extends StatefulWidget {
 }
 
 class _ChangeNomPrenomScreenState extends State<ChangeNomPrenomScreen> {
+
   final TextEditingController _nomController = TextEditingController();
   final TextEditingController _prenomController = TextEditingController();
+  final ProfilService _ProfilService = ProfilService();
+  String? storedFirstname;
+  String? storedName;    // Récupère le prénom depuis les prefs
+
+
+  void  _chargeInfo() async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      storedFirstname = prefs.getString('firstname');
+      storedName = prefs.getString('name'); // Récupère le prénom depuis les prefs
+
+    });
+
+  }
+
 
   @override
   Widget build(BuildContext context) {
+    _chargeInfo();
     return Scaffold(
       backgroundColor: whiteColor,
+
       appBar: AppBar(
         flexibleSpace: Image.asset(appbarImg, fit: BoxFit.cover,),
         title: const Text(
@@ -421,7 +488,7 @@ class _ChangeNomPrenomScreenState extends State<ChangeNomPrenomScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Modifier le nom et le prénom",
+                    "Modifier le nom d'utilisateur",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 20),
@@ -432,8 +499,14 @@ class _ChangeNomPrenomScreenState extends State<ChangeNomPrenomScreen> {
                       color: cloudColor,
                       borderRadius: BorderRadius.circular(8.0),
                     ),
-                    child: const Text(
-                      "Nom et Prenom : John Doe",
+                    /*
+                    child:  Text(
+                      "Nom et Prenom : $storedName $storedFirstname",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                     */
+                    child:  Text(
+                      "Nom d'utilisateur: $storedName ",
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -451,6 +524,7 @@ class _ChangeNomPrenomScreenState extends State<ChangeNomPrenomScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
+                  /*
                   SizedBox(
                     height: 50,
                     child: TextField(
@@ -463,12 +537,13 @@ class _ChangeNomPrenomScreenState extends State<ChangeNomPrenomScreen> {
                       style: const TextStyle(fontSize: 18),
                     ),
                   ),
+                   */
                   const SizedBox(height: 20),
                   SizedBox(
                     width: 500,
                     child: ElevatedButton(
                       onPressed: (){
-
+                        _updateName();
                       },
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.white,
@@ -489,6 +564,25 @@ class _ChangeNomPrenomScreenState extends State<ChangeNomPrenomScreen> {
       ),
     );
   }
+
+  void _updateName() async {
+    try {
+      // final response = await _ProfilService.updateName(_nomController.text, _prenomController.text);
+      final response = await _ProfilService.updateName(_nomController.text);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Nom d'utilisateur mis à jour avec succès"),
+        ),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de la mise à jour du nom et prénom: $e'),
+        ),
+      );
+    }
+  }
 }
 
 class ChangeNumberScreen extends StatefulWidget {
@@ -500,35 +594,25 @@ class ChangeNumberScreen extends StatefulWidget {
 
 class _ChangeNumberScreenState extends State<ChangeNumberScreen> {
   final TextEditingController phoneController = TextEditingController();
+  final ProfilService _ProfilService = ProfilService();
+  // Récupère le prénom depuis les prefs
+  String? storedNumero;  // Récupère le prénom depuis les prefs
+
+  void _chargeInfo() async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      storedNumero = prefs.getString('numero'); // Récupère le prénom depuis les prefs
+    });
+
+  }
 
   @override
   Widget build(BuildContext context) {
+    _chargeInfo();
     return Scaffold(
       backgroundColor: whiteColor,
-      appBar: AppBar(
-        flexibleSpace: Image.asset(
-          appbarImg,
-          fit: BoxFit.cover,
-        ),
-        title: const Text(
-          'Profil',
-          style: TextStyle(
-            color: whiteColor,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          color: whiteColor,
-          icon: const Icon(
-            Icons.arrow_back,
-            size: 28,
-          ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
+      appBar: CustomAppBar(title: "Profil"),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -550,8 +634,8 @@ class _ChangeNumberScreenState extends State<ChangeNumberScreen> {
                       color: cloudColor,
                       borderRadius: BorderRadius.circular(8.0),
                     ),
-                    child: const Text(
-                      "Numéro: +33123456789",
+                    child:  Text(
+                      "Numéro: $storedNumero",
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -572,7 +656,9 @@ class _ChangeNumberScreenState extends State<ChangeNumberScreen> {
                   SizedBox(
                     width: 500,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        _updateNumber();
+                      },
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.white,
                         backgroundColor: blueColor,
@@ -592,6 +678,24 @@ class _ChangeNumberScreenState extends State<ChangeNumberScreen> {
       ),
     );
   }
+
+  void _updateNumber() async {
+    try {
+      final response = await _ProfilService.updateNumber(phoneController.text);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Numéro de téléphone mis à jour avec succès'),
+        ),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de la mise à jour du numéro de téléphone: $e'),
+        ),
+      );
+    }
+  }
 }
 
 class ChangePasswordScreen extends StatefulWidget {
@@ -605,6 +709,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final TextEditingController oldPasswordController = TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
+  final ProfilService _ProfilService = ProfilService();
 
   bool _obscureOldPassword = true;
   bool _obscureNewPassword = true;
@@ -614,30 +719,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: whiteColor,
-      appBar: AppBar(
-        flexibleSpace: Image.asset(
-          appbarImg,
-          fit: BoxFit.cover,
-        ),
-        title: const Text(
-          'Profil',
-          style: TextStyle(
-            color: whiteColor,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          color: whiteColor,
-          icon: const Icon(
-            Icons.arrow_back,
-            size: 28,
-          ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
+      appBar: CustomAppBar(title: "Profil"),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -701,7 +783,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   SizedBox(
                     width: 500,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        _validateAndSubmit();
+                      },
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.white,
                         backgroundColor: blueColor,
@@ -750,7 +834,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     );
   }
 
-  void _validateAndSubmit() {
+  void _validateAndSubmit() async {
     if (newPasswordController.text != confirmPasswordController.text) {
       // Afficher un message d'erreur si les mots de passe ne correspondent pas
       ScaffoldMessenger.of(context).showSnackBar(
@@ -761,16 +845,24 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       return;
     }
 
-    // Afficher un message de succès
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Mot de passe modifié avec succès'),
-      ),
-    );
+    try {
+      final response = await _ProfilService.updatePassword(oldPasswordController.text, newPasswordController.text);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mot de passe modifié avec succès'),
+        ),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de la mise à jour du mot de passe: $e'),
+        ),
+      );
+    }
   }
 }
 
-/*
 class ChangePhotoScreen extends StatefulWidget {
   final File? image;
 
@@ -782,6 +874,7 @@ class ChangePhotoScreen extends StatefulWidget {
 
 class _ChangePhotoScreenState extends State<ChangePhotoScreen> {
   File? _image;
+  final ProfilService _ProfilService = ProfilService();
 
   @override
   void initState() {
@@ -802,10 +895,19 @@ class _ChangePhotoScreenState extends State<ChangePhotoScreen> {
 
   Future<void> _saveImage() async {
     if (_image != null) {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('profileImagePath', _image!.path);
-      profileImageNotifier.value = _image;
-      Navigator.of(context).pop(_image);
+      try {
+        final response = await _ProfilService.updateProfileImage(_image!);
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('profileImagePath', _image!.path);
+        profileImageNotifier.value = _image;
+        Navigator.of(context).pop(_image);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la mise à jour de la photo de profil: $e'),
+          ),
+        );
+      }
     }
   }
 
@@ -849,21 +951,6 @@ class _ChangePhotoScreenState extends State<ChangePhotoScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: 500,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: blueColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    ),
-                    child: const Text('Enregistrer'),
-                  ),
-                ),
                 ElevatedButton(
                   onPressed: _pickImage,
                   style: ElevatedButton.styleFrom(
@@ -878,10 +965,12 @@ class _ChangePhotoScreenState extends State<ChangePhotoScreen> {
                   child: const Text('Choisir une photo de profil'),
                 ),
                 const SizedBox(height: 20),
-                Container(
+                SizedBox(
                   width: 500,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      _saveImage();
+                    },
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.white,
                       backgroundColor: blueColor,
@@ -901,5 +990,3 @@ class _ChangePhotoScreenState extends State<ChangePhotoScreen> {
     );
   }
 }
-
-*/

@@ -1,55 +1,85 @@
-// ignore_for_file: prefer_const_constructors
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_swiper_view/flutter_swiper_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supriz/screens/notifications/notifications_screen.dart';
 import '../../consts/colors.dart';
+import '../../consts/global.dart';
 import '../../consts/images.dart';
 import '../../models/publicite.dart';
+import '../historique/historique_screen.dart';
 import '../produits/supriz.dart';
 import '../profil/profil_screen.dart';
+import '../../services/auth_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final Function(int, String) onCategorySelected;
 
-  HomeScreen({super.key, required this.onCategorySelected});
+  const HomeScreen({super.key, required this.onCategorySelected});
 
-  final List<String> imageUrls = [
-    crsImg1,
-    crsImg2,
-    crsImg3,
-    crsImg4,
-  ];
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _userName = 'Invité';
+  File? _profileImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+    _loadProfileImage();
+    profileImageNotifier.addListener(_updateProfileImage);
+  }
+
+  @override
+  void dispose() {
+    profileImageNotifier.removeListener(_updateProfileImage);
+    super.dispose();
+  }
+
+  Future<void> _loadUserName() async {
+    final userName = await AuthService().getUserName();
+    setState(() {
+      _userName = userName;
+    });
+  }
+
+  Future<void> _loadProfileImage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? imagePath = prefs.getString('profileImagePath');
+    if (imagePath != null) {
+      setState(() {
+        _profileImage = File(imagePath);
+      });
+    }
+  }
+
+  void _updateProfileImage() {
+    setState(() {
+      _profileImage = profileImageNotifier.value;
+    });
+  }
 
   final List<Publicite> publicites = [
-    Publicite(
-        id: 1, pathImage: crsImg1, sousCategorie: 0, categorie: "Pantalons"),
+    Publicite(id: 1, pathImage: crsImg1, sousCategorie: 0, categorie: "Pantalons"),
     Publicite(id: 2, pathImage: crsImg2, sousCategorie: 1, categorie: "Jupes"),
     Publicite(id: 3, pathImage: crsImg3, sousCategorie: 2, categorie: "Robes"),
     Publicite(id: 4, pathImage: crsImg4, sousCategorie: 0, categorie: "Vestes"),
   ];
 
   final List<Map<String, dynamic>> gridItems = [
-    {
-      "title": "Hommes",
-      "image": produit1,
-      "index": 0,
-      "subCategory": "T-shirts"
-    },
+    {"title": "Hommes", "image": produit1, "index": 0, "subCategory": "T-shirts"},
     {"title": "Femmes", "image": produit2, "index": 1, "subCategory": "Robes"},
-    {
-      "title": "Enfants",
-      "image": produit3,
-      "index": 2,
-      "subCategory": "T-shirts"
-    },
+    {"title": "Enfants", "image": produit3, "index": 2, "subCategory": "T-shirts"},
     {"title": "Supriz", "image": produit4, "index": 3},
   ];
 
   @override
   Widget build(BuildContext context) {
-    // Verrouille l'orientation en mode portrait
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
@@ -65,14 +95,19 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Text(
-                  "Bienvenue John Doe",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                Text(
+                  "Bienvenue ${_userName.isNotEmpty ? _userName[0].toUpperCase() + _userName.substring(1) : ''}",
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-                _buildImageSwiper(),
+                ImageSwiper(publicites: publicites, onCategorySelected: widget.onCategorySelected),
                 const SizedBox(height: 15),
-                _buildProductHeader(context),
+                ProductHeader(onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HistoriquesScreen()),
+                  );
+                }),
                 const SizedBox(height: 5),
               ],
             ),
@@ -90,41 +125,18 @@ class HomeScreen extends StatelessWidget {
                 itemCount: gridItems.length,
                 itemBuilder: (context, index) {
                   final item = gridItems[index];
-                  return GestureDetector(
+                  return GridItem(
+                    item: item,
                     onTap: () {
                       if (item['index'] == 3) {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => SurprizScreen()),
+                          MaterialPageRoute(builder: (context) => SurprizScreen()),
                         );
                       } else {
-                        onCategorySelected(
-                            item['index'], item['subCategory'] ?? "");
+                        widget.onCategorySelected(item['index'], item['subCategory'] ?? "");
                       }
                     },
-                    child: Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.asset(
-                            item['image'],
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 8,
-                          left: 8,
-                          child: Text(
-                            item['title'],
-                            style: const TextStyle(
-                                color: whiteColor, fontSize: 16),
-                          ),
-                        ),
-                      ],
-                    ),
                   );
                 },
               ),
@@ -143,10 +155,7 @@ class HomeScreen extends StatelessWidget {
       centerTitle: false,
       title: Row(
         children: [
-          Image.asset(
-            logo,
-            height: 28,
-          ),
+          Image.asset(logo, height: 28),
           const SizedBox(width: 10),
         ],
       ),
@@ -156,7 +165,7 @@ class HomeScreen extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => NotificationsScreen()),
+              MaterialPageRoute(builder: (context) => NotificationScreen()),
             );
           },
         ),
@@ -169,21 +178,27 @@ class HomeScreen extends StatelessWidget {
           },
           child: Padding(
             padding: const EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(
-              backgroundColor: whiteColor,
-              radius: 15,
-              child: Icon(
-                Icons.account_circle,
-                color: blackColor,
-              ),
+            child:CircleAvatar(
+              radius: 14,
+              backgroundImage: _profileImage != null
+                  ? FileImage(_profileImage!)
+                  : const AssetImage(profilImag) as ImageProvider<Object>,
             ),
           ),
         ),
       ],
     );
   }
+}
 
-  Widget _buildImageSwiper() {
+class ImageSwiper extends StatelessWidget {
+  final List<Publicite> publicites;
+  final Function(int, String) onCategorySelected;
+
+  const ImageSwiper({super.key, required this.publicites, required this.onCategorySelected});
+
+  @override
+  Widget build(BuildContext context) {
     return Swiper(
       layout: SwiperLayout.TINDER,
       itemHeight: 220.0,
@@ -198,8 +213,7 @@ class HomeScreen extends StatelessWidget {
         final publicite = publicites[index];
         return GestureDetector(
           onTap: () {
-            onCategorySelected(
-                publicite.sousCategorie ?? 0, publicite.categorie ?? "");
+            onCategorySelected(publicite.sousCategorie ?? 0, publicite.categorie ?? "");
           },
           child: Container(
             decoration: BoxDecoration(
@@ -220,8 +234,15 @@ class HomeScreen extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
     );
   }
+}
 
-  Widget _buildProductHeader(BuildContext context) {
+class ProductHeader extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const ProductHeader({super.key, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -232,10 +253,9 @@ class HomeScreen extends StatelessWidget {
         TextButton.icon(
           style: TextButton.styleFrom(
             backgroundColor: roscColor,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
-          onPressed: () {},
+          onPressed: onPressed,
           icon: const Icon(Icons.history, size: 18, color: Colors.black),
           label: const Text(
             "Historiques",
@@ -246,3 +266,39 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+
+class GridItem extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final VoidCallback onTap;
+
+  const GridItem({super.key, required this.item, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset(
+              item['image'],
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            ),
+          ),
+          Positioned(
+            bottom: 8,
+            left: 8,
+            child: Text(
+              item['title'],
+              style: const TextStyle(color: whiteColor, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

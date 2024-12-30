@@ -2,6 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:supriz/consts/consts.dart';
+import 'package:supriz/screens/historique/historique_screen.dart';
+import 'package:supriz/screens/notifications/notifications_screen.dart';
+import 'package:supriz/screens/profil/profil_screen.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/appbar_custom.dart';
 
@@ -191,6 +194,15 @@ class _ParametresScreenState extends State<ParametresScreen> {
   Widget build(BuildContext context) {
     double spacing = 20.0;
 
+
+    /*
+              onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => NotificationScreen()),
+            );
+          },
+     */
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: CustomAppBar(title: "Paramètres"),
@@ -203,17 +215,17 @@ class _ParametresScreenState extends State<ParametresScreen> {
                 SizedBox(height: spacing),
                 _buildLanguageRow(context),
                 SizedBox(height: spacing / 2),
-                _buildInfoRow(context, "Notifications", ()),
+                _buildInfoRow(context, "Notifications", NotificationScreen()),
                 SizedBox(height: spacing / 2),
                 _buildInfoRow(
-                    context, "Conditions Générales", const CondicUtilisation()),
+                    context, "Conditions Générales", CondicUtilisation()),
                 SizedBox(height: spacing / 2),
                 _buildInfoRow(context, "Politiques de Confidentialité",
                     const PolitiquesScreen()),
                 SizedBox(height: spacing / 2),
-                _buildInfoRow(context, "Historiques", ()),
+                _buildInfoRow(context, "Historiques", HistoriquesScreen()),
                 SizedBox(height: spacing / 2),
-                _buildInfoRow(context, "Modifier mon profil", ()),
+                _buildInfoRow(context, "Modifier mon profil", ProfilScreen()),
                 SizedBox(height: spacing / 2),
                 _buildInfoRow(context, "Supprimer mon compte",
                         () => _showDeleteAccountDialog(context)),
