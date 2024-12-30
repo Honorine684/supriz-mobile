@@ -6,6 +6,8 @@ import 'package:supriz/screens/auth/login_screen.dart';
 import 'package:supriz/screens/auth/register_screen.dart';
 import '../consts/colors.dart';
 import '../consts/strings.dart';
+import '../screens/auth/opt_screen.dart';
+import '../screens/auth/reset_pwd.dart';
 import '../screens/home/bottom_navigation.dart';
 
 class AuthService {
@@ -351,5 +353,114 @@ class AuthService {
   Future<String> _getUserId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('userId') ?? '';
+  }
+
+  // Méthode pour envoyer l'OTP à l'email de l'utilisateur
+  Future<void> sendOtpMdp(String email, BuildContext context, Function setLoading) async {
+    setLoading(true); // Début du chargement
+
+    final response = await http.post(
+      Uri.parse('$domaineapi/send-otp-mdp'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'user': email, // Assuming 'id_user' is the email in your case
+      }),
+    );
+
+    setLoading(false); // Fin du chargement
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('OTP envoyé avec succès'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => OTPScreen(email: email)),
+      );
+    } else {
+      final responseBody = jsonDecode(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(responseBody['message']),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // Méthode pour vérifier l'OTP
+  Future<void> verifyOtpMdp(String email, String otp, BuildContext context, Function setLoading) async {
+    setLoading(true); // Début du chargement
+
+    final response = await http.post(
+      Uri.parse('$domaineapi/verify-otp'),
+      body: {
+        'user': email,
+        'otp': otp,
+      },
+    );
+
+    setLoading(false); // Fin du chargement
+
+    if (response.statusCode == 200) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => ResetPwd(email: email)),
+            (Route<dynamic> route) => false,
+      );
+    } else {
+      final responseBody = jsonDecode(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(responseBody['message']),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // Méthode pour réinitialiser le mot de passe
+  Future<void> resetPassword(String email, String newPassword, BuildContext context, Function setLoading) async {
+    setLoading(true); // Début du chargement
+
+    final response = await http.post(
+      Uri.parse('$domaineapi/update-password-mdp'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'email': email,
+        'new_password': newPassword,
+      }),
+    );
+
+    setLoading(false); // Fin du chargement
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mot de passe réinitialisé avec succès'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (Route<dynamic> route) => false,
+      );
+    } else {
+      final responseBody = jsonDecode(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(responseBody['message']),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

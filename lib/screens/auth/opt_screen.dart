@@ -8,6 +8,7 @@ import 'package:supriz/screens/auth/reset_pwd.dart';
 import '../../consts/images.dart';
 import '../../widgets/appbar_custom.dart';
 import '../../widgets/our_button.dart';
+import '../../services/auth_service.dart';
 
 class OTPScreen extends StatefulWidget {
   final String email;
@@ -20,12 +21,18 @@ class OTPScreen extends StatefulWidget {
 
 class _OTPScreenState extends State<OTPScreen> {
   final TextEditingController _otpController = TextEditingController();
-  final bool _isLoading = false;
-  final String _errorMessage = '';
+  bool _isLoading = false;
+  String _errorMessage = '';
 
-  /*
-  void _verifyOTP() async {
-    if (_otpController.text.length != 4) { // Code OTP à 4 chiffres
+  void setLoading(bool isLoading) {
+    setState(() {
+      _isLoading = isLoading;
+    });
+  }
+
+  Future<void> _verifyOTP() async {
+    if (_otpController.text.length != 4) {
+      // Code OTP à 4 chiffres
       setState(() {
         _errorMessage = 'Veuillez entrer un code OTP valide';
       });
@@ -38,13 +45,8 @@ class _OTPScreenState extends State<OTPScreen> {
     });
 
     try {
-      // Remplacez la logique ici avec la vérification réelle de l'OTP
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Vérification réussie
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => ResetPwd()),
-      );
+      await AuthService()
+          .verifyOtpMdp(widget.email, _otpController.text, context, setLoading);
     } catch (e) {
       setState(() {
         _errorMessage = 'Code OTP incorrect. Réessayez.';
@@ -57,12 +59,8 @@ class _OTPScreenState extends State<OTPScreen> {
   }
 
   void _resendOTP() {
-    // Logique pour renvoyer le code OTP
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Nouveau code OTP envoyé')),
-    );
+    AuthService().sendOtpMdp(widget.email, context, setLoading);
   }
-   */
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +109,6 @@ class _OTPScreenState extends State<OTPScreen> {
                 FilteringTextInputFormatter.digitsOnly,
               ],
             ),
-
             if (_errorMessage.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -120,35 +117,20 @@ class _OTPScreenState extends State<OTPScreen> {
                   style: const TextStyle(color: Colors.red),
                 ),
               ),
-
             const SizedBox(height: 20),
-
             ourButton(
               text: 'Verifier',
               backgroundColor: blueColor,
               textColor: whiteColor,
-              onPressed: () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => ResetPwd()),
-                      (Route<dynamic> route) => false,
-                );
-              },
+              onPressed: _verifyOTP,
+              isLoading: _isLoading, // Passer l'état de chargement
             ),
-
             const SizedBox(height: 20),
             ourButton(
               text: 'Renvoyer le code',
               backgroundColor: roscColor,
               textColor: blackColor,
-              onPressed: () {
-                /*
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => OTPScreen(email: emailController.text)),
-                );
-                 */
-              },
+              onPressed: _resendOTP,
             ),
           ],
         ),

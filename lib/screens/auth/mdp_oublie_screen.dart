@@ -1,15 +1,31 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';
-import 'package:supriz/screens/auth/opt_screen.dart';
 import '../../consts/consts.dart';
 import '../../widgets/appbar_custom.dart';
 import '../../widgets/our_button.dart';
+import '../../services/auth_service.dart';
 
-
-class MdpOublieScreen extends StatelessWidget {
+class MdpOublieScreen extends StatefulWidget {
   MdpOublieScreen({super.key});
+
+  @override
+  _MdpOublieScreenState createState() => _MdpOublieScreenState();
+}
+
+class _MdpOublieScreenState extends State<MdpOublieScreen> {
   final TextEditingController emailController = TextEditingController();
+  bool _isLoading = false;
+
+  void setLoading(bool isLoading) {
+    setState(() {
+      _isLoading = isLoading;
+    });
+  }
+
+  Future<void> sendOtp() async {
+    await AuthService().sendOtpMdp(emailController.text, context, setLoading);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,12 +60,8 @@ class MdpOublieScreen extends StatelessWidget {
               text: 'Valider',
               backgroundColor: blueColor,
               textColor: whiteColor,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => OTPScreen(email: emailController.text)),
-                );
-              },
+              onPressed: sendOtp,
+              isLoading: _isLoading, // Passer l'état de chargement
             ),
           ],
         ),
