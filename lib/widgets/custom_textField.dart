@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supriz/consts/consts.dart';
+import 'package:supriz/screens/auth/register_screen.dart';
 
-/// Widget personnalisé pour un champ de texte avec un titre, un préfixe visible et des options configurables.
+/// Widget personnalisé pour un champ de texte avec un titre et des options configurables.
 Widget customTextField({
   required String title,
   required String hint,
@@ -11,8 +13,10 @@ Widget customTextField({
   String? Function(String?)? validator,
   EdgeInsetsGeometry contentPadding = const EdgeInsets.symmetric(vertical: 5.0),
   Widget? suffixIcon,
-  String? prefixText, // Préfixe textuel toujours visible
-  int? maxLength, // Limite optionnelle de caractères
+  Widget? prefixIcon, // Ajout du paramètre prefixIcon
+  InputDecoration? decoration, // Décoration personnalisée
+  int? maxLength,
+  List<TextInputFormatter>? inputFormatters, // Ajout du paramètre inputFormatters
 }) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,7 +40,8 @@ Widget customTextField({
         style: const TextStyle(
           fontWeight: FontWeight.w400,
         ),
-        decoration: InputDecoration(
+        inputFormatters: inputFormatters, // Application des inputFormatters
+        decoration: decoration ?? InputDecoration(
           hintText: hint,
           hintStyle: const TextStyle(
             fontSize: 14,
@@ -52,19 +57,15 @@ Widget customTextField({
             ),
           ),
           suffixIcon: suffixIcon,
-          // Modification ici pour le préfixe
-          prefixText: prefixText,
-          prefixStyle: const TextStyle(
-            fontSize: 16,
-            color: greyColor,
-            fontWeight: FontWeight.bold,
-          ),
-          // Ajout de ces lignes
-          filled: prefixText != null, // Active le remplissage si un préfixe existe
+          prefixIcon: prefixIcon, // Utilisation du prefixIcon
+          filled: false, // Désactive le remplissage par défaut
           fillColor: Colors.transparent, // Couleur de remplissage transparente
         ),
         validator: validator,
         maxLength: maxLength, // Limite de caractères
+        buildCounter: (BuildContext context, {int? currentLength, int? maxLength, bool? isFocused}) {
+          return null; // Masquer le compteur de caractères
+        },
       ),
       const SizedBox(height: 17),
     ],

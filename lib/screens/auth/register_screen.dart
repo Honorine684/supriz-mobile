@@ -27,6 +27,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false; // État de chargement
   final AuthService _authService = AuthService();
 
+  InputDecoration inputDecoration({
+    required String hint,
+    required EdgeInsetsGeometry contentPadding,
+    Widget? suffixIcon,
+    String? prefixText, // Ajout du paramètre prefixIcon
+    int? maxLength,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(
+        fontSize: 14,
+        fontFamily: bold,
+        color: greyColor,
+      ),
+      isDense: true,
+      contentPadding: contentPadding,
+      focusedBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(
+          color: blueColor,
+          width: 2.0,
+        ),
+      ),
+      suffixIcon: suffixIcon,
+      prefixText: prefixText, // Utilisation du prefixIcon
+      filled: false,
+      fillColor: Colors.transparent, // Couleur de remplissage transparente
+      counterText: maxLength != null ? '${maxLength - (phoneController.text.length)}' : null,
+    );
+  }
+
   Future<void> registerUser() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -39,7 +69,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         phoneController.text,
         passwordController.text,
         context,
-        (bool isLoading) {
+            (bool isLoading) {
           setState(() {
             _isLoading = isLoading; // Mettre à jour l'état de chargement
           });
@@ -122,15 +152,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   hint: "Entrez votre numéro de téléphone",
                                   controller: phoneController,
                                   keyboardType: TextInputType.number,
-                                  prefixText:
-                                      "+229 01 ", // Préfixe toujours visible
-                                  maxLength: 8, // Limite à 8 chiffres
+                                  inputFormatters: [PhoneNumberFormatter()],
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                    child: Text(
+                                      "🇧🇯", // Drapeau du Bénin
+                                      style: const TextStyle(fontSize: 20), // Taille ajustée
+                                    ),
+                                  ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Ce champ est requis';
                                     }
-                                    if (!RegExp(r'^\d+$').hasMatch(value)) {
-                                      return 'Entrez un numéro valide de 8 chiffres';
+                                    if (value.startsWith('01')) {
+                                      if (value.length != 10) {
+                                        return 'Entrez un numéro valide de 10 chiffres';
+                                      }
+                                    } else {
+                                      if (value.length != 8) {
+                                        return 'Entrez un numéro valide de 8 chiffres';
+                                      }
                                     }
                                     return null;
                                   },
@@ -153,7 +194,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     onPressed: () {
                                       setState(() {
                                         _isPasswordVisible =
-                                            !_isPasswordVisible;
+                                        !_isPasswordVisible;
                                       });
                                     },
                                   ),
@@ -178,7 +219,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   text: 'Creer un compte',
                                   onPressed: registerUser,
                                   isLoading:
-                                      _isLoading, // Passer l'état de chargement
+                                  _isLoading, // Passer l'état de chargement
                                 ),
                                 const SizedBox(height: 5),
                                 const Text('ou'),
@@ -192,7 +233,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       context,
                                       MaterialPageRoute(
                                           builder: (context) =>
-                                              const LoginScreen()),
+                                          const LoginScreen()),
                                     );
                                   },
                                 ),
@@ -212,6 +253,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
+
+class PhoneNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.startsWith('01')) {
+      if (newValue.text.length > 10) {
+        return oldValue;
+      }
+    } else {
+      if (newValue.text.length > 8) {
+        return oldValue;
+      }
+    }
+    return newValue;
+  }
+}
+
 
 class OtpScreen extends StatefulWidget {
   final String email;
