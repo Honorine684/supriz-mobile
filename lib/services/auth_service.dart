@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,9 +10,9 @@ import '../consts/strings.dart';
 import '../screens/auth/opt_screen.dart';
 import '../screens/auth/reset_pwd.dart';
 import '../screens/home/bottom_navigation.dart';
+import '../screens/panier/cart_controller.dart';
 
 class AuthService {
-  // ... autres méthodes existantes ...
 
   Future<void> registerUser(
       String nom, String email, String numero, String password, BuildContext context, Function setLoading) async {
@@ -92,7 +93,7 @@ class AuthService {
       );
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => OTPScreen(email: email)),
+        MaterialPageRoute(builder: (context) => OtpScreen(email: email)),
       );
     } else {
       final responseBody = jsonDecode(response.body);
@@ -176,6 +177,10 @@ class AuthService {
           await prefs.setString('name', responseData['name']); // Stocker le nom de l'utilisateur
           await prefs.setString('numero', responseData['numero']); // Stocker le numéro de l'utilisateur
           await prefs.setString('email', responseData['email']); // Stocker l'email de l'utilisateur
+
+          // Récupérer immédiatement les achats après la connexion
+          final cartController = Get.find<CartController>();
+          await cartController.fetchAchats();
 
           // Rediriger vers la page d'accueil
           Navigator.pushAndRemoveUntil(
