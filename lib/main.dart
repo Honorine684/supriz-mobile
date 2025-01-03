@@ -72,9 +72,6 @@ class _SuprizState extends State<Supriz> {
           fontFamily: regular,
           useMaterial3: true,
         ),
-        initialBinding: BindingsBuilder(() {
-          Get.put(CartController());
-        }),
         home: SplashScreen(),
         navigatorKey: connectionChecker.navigatorKey,
       ),

@@ -1,12 +1,10 @@
-import 'dart:io';
+// ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_swiper_view/flutter_swiper_view.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supriz/screens/notifications/notifications_screen.dart';
 import '../../consts/colors.dart';
-import '../../consts/global.dart';
 import '../../consts/images.dart';
 import '../../models/publicite.dart';
 import '../historique/historique_screen.dart';
@@ -25,20 +23,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String _userName = 'Invité';
-  File? _profileImage;
 
   @override
   void initState() {
     super.initState();
     _loadUserName();
-    _loadProfileImage();
-    profileImageNotifier.addListener(_updateProfileImage);
-  }
-
-  @override
-  void dispose() {
-    profileImageNotifier.removeListener(_updateProfileImage);
-    super.dispose();
   }
 
   Future<void> _loadUserName() async {
@@ -48,33 +37,28 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<void> _loadProfileImage() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? imagePath = prefs.getString('profileImagePath');
-    if (imagePath != null) {
-      setState(() {
-        _profileImage = File(imagePath);
-      });
-    }
-  }
-
-  void _updateProfileImage() {
-    setState(() {
-      _profileImage = profileImageNotifier.value;
-    });
-  }
-
   final List<Publicite> publicites = [
-    Publicite(id: 1, pathImage: crsImg1, sousCategorie: 0, categorie: "Pantalons"),
+    Publicite(
+        id: 1, pathImage: crsImg1, sousCategorie: 0, categorie: "Pantalons"),
     Publicite(id: 2, pathImage: crsImg2, sousCategorie: 1, categorie: "Jupes"),
     Publicite(id: 3, pathImage: crsImg3, sousCategorie: 2, categorie: "Robes"),
     Publicite(id: 4, pathImage: crsImg4, sousCategorie: 0, categorie: "Vestes"),
   ];
 
   final List<Map<String, dynamic>> gridItems = [
-    {"title": "Hommes", "image": produit1, "index": 0, "subCategory": "T-shirts"},
+    {
+      "title": "Hommes",
+      "image": produit1,
+      "index": 0,
+      "subCategory": "T-shirts"
+    },
     {"title": "Femmes", "image": produit2, "index": 1, "subCategory": "Robes"},
-    {"title": "Enfants", "image": produit3, "index": 2, "subCategory": "T-shirts"},
+    {
+      "title": "Enfants",
+      "image": produit3,
+      "index": 2,
+      "subCategory": "T-shirts"
+    },
     {"title": "Supriz", "image": produit4, "index": 3},
   ];
 
@@ -97,15 +81,19 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Text(
                   "Bienvenue ${_userName.isNotEmpty ? _userName[0].toUpperCase() + _userName.substring(1) : ''}",
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-                ImageSwiper(publicites: publicites, onCategorySelected: widget.onCategorySelected),
+                ImageSwiper(
+                    publicites: publicites,
+                    onCategorySelected: widget.onCategorySelected),
                 const SizedBox(height: 15),
                 ProductHeader(onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => HistoriquesScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => HistoriquesScreen()),
                   );
                 }),
                 const SizedBox(height: 5),
@@ -131,10 +119,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (item['index'] == 3) {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => SurprizScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => SurprizScreen()),
                         );
                       } else {
-                        widget.onCategorySelected(item['index'], item['subCategory'] ?? "");
+                        widget.onCategorySelected(
+                            item['index'], item['subCategory'] ?? "");
                       }
                     },
                   );
@@ -169,22 +159,14 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           },
         ),
-        GestureDetector(
-          onTap: () {
+        IconButton(
+          icon: const Icon(Icons.account_circle, color: Colors.black),
+          onPressed: () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => ProfilScreen()),
             );
           },
-          child: Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child:CircleAvatar(
-              radius: 14,
-              backgroundImage: _profileImage != null
-                  ? FileImage(_profileImage!)
-                  : const AssetImage(profilImag) as ImageProvider<Object>,
-            ),
-          ),
         ),
       ],
     );
@@ -195,7 +177,8 @@ class ImageSwiper extends StatelessWidget {
   final List<Publicite> publicites;
   final Function(int, String) onCategorySelected;
 
-  const ImageSwiper({super.key, required this.publicites, required this.onCategorySelected});
+  const ImageSwiper(
+      {super.key, required this.publicites, required this.onCategorySelected});
 
   @override
   Widget build(BuildContext context) {
@@ -213,7 +196,8 @@ class ImageSwiper extends StatelessWidget {
         final publicite = publicites[index];
         return GestureDetector(
           onTap: () {
-            onCategorySelected(publicite.sousCategorie ?? 0, publicite.categorie ?? "");
+            onCategorySelected(
+                publicite.sousCategorie ?? 0, publicite.categorie ?? "");
           },
           child: Container(
             decoration: BoxDecoration(
@@ -253,7 +237,8 @@ class ProductHeader extends StatelessWidget {
         TextButton.icon(
           style: TextButton.styleFrom(
             backgroundColor: roscColor,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           onPressed: onPressed,
           icon: const Icon(Icons.history, size: 18, color: Colors.black),
@@ -301,4 +286,3 @@ class GridItem extends StatelessWidget {
     );
   }
 }
-

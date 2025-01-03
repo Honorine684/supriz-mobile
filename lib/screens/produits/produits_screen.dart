@@ -227,7 +227,9 @@ class _ProduitScreenState extends State<ProduitScreen> {
             ),
             Expanded(
               child: _isLoading
-                  ? Center(child: CircularProgressIndicator())
+                  ? Center(child: CircularProgressIndicator(
+                color: blueColor,
+              ))
                   : _isError
                       ? Center(child: Text('Erreur de chargement des données'))
                       : _buildProductList(),
@@ -396,7 +398,9 @@ class _ProduitScreenState extends State<ProduitScreen> {
                                               loadingProgress) =>
                                           loadingProgress == null
                                               ? child
-                                              : CircularProgressIndicator(),
+                                              : CircularProgressIndicator(
+                                            color: blueColor,
+                                          ),
                                           errorBuilder:
                                               (context, error, stackTrace) =>
                                               Icon(Icons.error_outline),
