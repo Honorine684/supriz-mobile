@@ -141,9 +141,14 @@ class _PaymentPageState extends State<PaymentPage> {
                 keyboardType: TextInputType.number,
                 cursorColor: blueColor, // Couleur du curseur
                 maxLength: 8,
+                enabled: !_isLoading, // Désactive le champ de saisie pendant le chargement
                 decoration: InputDecoration(
                   counterText: '',
-                  border: OutlineInputBorder(),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: _isLoading ? Colors.grey : blueColor, // Change la couleur de la bordure
+                    ),
+                  ),
                   hintText: 'Entrer le numéro de paiement',
                   prefixIcon: Padding(
                     padding: const EdgeInsets.all(12.0), // Ajustez le padding selon vos besoins
@@ -152,72 +157,85 @@ class _PaymentPageState extends State<PaymentPage> {
                       style: const TextStyle(fontSize: 20), // Taille ajustée
                     ),
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: _isLoading ? Colors.grey : blueColor, // Change la couleur de la bordure
+                    ),
+                  ),
+                  disabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Colors.grey, // Change la couleur de la bordure
+                    ),
+                  ),
+                  hintStyle: TextStyle(
+                    color: _isLoading ? Colors.grey : Colors.black, // Change la couleur du texte
+                  ),
                 ),
               ),
               const SizedBox(height: 15),
-              // Bouton pour lancer le décaissement et afficher la WebView dans un Dialog
+// Bouton pour lancer le décaissement et afficher la WebView dans un Dialog
               ElevatedButton(
                 onPressed: _isLoading
                     ? null
                     : () async {
-                        if (paiementNumberController.text.isEmpty ||
-                            paiementNumberController.text.length != 8) {
-                          _showErrorDialog(context,
-                              'Veuillez entrer un numéro de paiement valide.');
-                          return;
-                        }
+                  if (paiementNumberController.text.isEmpty ||
+                      paiementNumberController.text.length != 8) {
+                    _showErrorDialog(context,
+                        'Veuillez entrer un numéro de paiement valide.');
+                    return;
+                  }
 
-                        setState(() {
-                          _isLoading = true;
-                        });
+                  setState(() {
+                    _isLoading = true;
+                  });
 
-                        final SharedPreferences prefs =
-                            await SharedPreferences.getInstance();
-                        final token = prefs.getString('token');
-                        final firstname = prefs.getString('name');
-                        final email = prefs.getString('email');
+                  final SharedPreferences prefs =
+                  await SharedPreferences.getInstance();
+                  final token = prefs.getString('token');
+                  final firstname = prefs.getString('name');
+                  final email = prefs.getString('email');
 
-                        final response = await _makeRequest(
-                          Uri.parse('$domaineapi/create-transaction'),
-                          {
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer $token',
-                          },
-                          jsonEncode({
-                            'amount': totalAmount.toInt(),
-                            'currency': 'XOF',
-                            'name': firstname,
-                            'email': email,
-                            'phone_number':
-                                '+229${paiementNumberController.text}',
-                            'phone_number_country': 'bj',
-                          }),
-                        );
+                  final response = await _makeRequest(
+                    Uri.parse('$domaineapi/create-transaction'),
+                    {
+                      'Content-Type': 'application/json',
+                      'Authorization': 'Bearer $token',
+                    },
+                    jsonEncode({
+                      'amount': totalAmount.toInt(),
+                      'currency': 'XOF',
+                      'name': firstname,
+                      'email': email,
+                      'phone_number':
+                      '+229${paiementNumberController.text}',
+                      'phone_number_country': 'bj',
+                    }),
+                  );
 
-                        setState(() {
-                          _isLoading = false;
-                        });
+                  setState(() {
+                    _isLoading = false;
+                  });
 
-                        if (response.statusCode == 200) {
-                          final responseData = jsonDecode(response.body);
-                          final transactionUrl =
-                              responseData['transaction_url']['url'];
-                          final code = responseData['code'];
-                          print('Transaction URL: $transactionUrl');
+                  if (response.statusCode == 200) {
+                    final responseData = jsonDecode(response.body);
+                    final transactionUrl =
+                    responseData['transaction_url']['url'];
+                    final code = responseData['code'];
+                    print('Transaction URL: $transactionUrl');
 
-                          // Afficher la WebView dans un Dialog
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return PaymentPopupWebView(
-                                  url: transactionUrl, code: code);
-                            },
-                          );
-                        } else {
-                          _showErrorDialog(context,
-                              'Erreur lors du décaissement. Veuillez réessayer.');
-                        }
+                    // Afficher la WebView dans un Dialog
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return PaymentPopupWebView(
+                            url: transactionUrl, code: code);
                       },
+                    );
+                  } else {
+                    _showErrorDialog(context,
+                        'Erreur lors du décaissement. Veuillez réessayer.');
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
                   backgroundColor: blueColor,
@@ -227,11 +245,10 @@ class _PaymentPageState extends State<PaymentPage> {
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      )
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                )
                     : const Text('Lancer le décaissement'),
               ).box.width(double.infinity).height(50).make(),
-
               const SizedBox(height: 24),
               const Text(
                 '1. Assurez-vous que votre numéro est correct et suffisamment approvisionné avec le montant total.',

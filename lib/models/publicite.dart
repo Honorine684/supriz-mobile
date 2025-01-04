@@ -1,22 +1,36 @@
+import '../consts/strings.dart';
+
 class Publicite {
   final int id;
   final String pathImage;
-  final int? sousCategorie;
-  final String? categorie;
+  final int? typeCategorieId;
+  final String? nameSousCategories;
 
   Publicite({
     required this.id,
     required this.pathImage,
-    this.sousCategorie,
-    this.categorie,
+    this.typeCategorieId,
+    this.nameSousCategories,
   });
 
-  factory Publicite.fromJson(Map<String, dynamic> json) {
+  factory Publicite.fromJson(Map<String, dynamic> json, String baseUrl) {
+    String _getFullImageUrl(String pathImage) {
+      return '$domaineapiImage/$pathImage';
+    }
+
+    // Décrémente le type_categorie_id de 1
+    int? _getTypeCategorieId(int? typeCategorieId) {
+      if (typeCategorieId != null) {
+        return typeCategorieId - 1;
+      }
+      return null;
+    }
+
     return Publicite(
       id: json['id'],
-      pathImage: json['pathImage'],
-      sousCategorie: json['sous_categorie']?['id'],
-      categorie: json['sous_categorie']?['categorie']?['libelle_homme_categories'],
+      pathImage: _getFullImageUrl(json['pathImage']),
+      typeCategorieId: _getTypeCategorieId(json['sous_categorie']?['type_categorie_id']),
+      nameSousCategories: json['sous_categorie']?['name_sous_categories'],
     );
   }
 }

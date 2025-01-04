@@ -397,16 +397,6 @@ class _ProduitScreenState extends State<ProduitScreen> {
                                           fit: BoxFit.cover,
                                           width: double.infinity,
                                           height: 230,
-                                          loadingBuilder: (context, child,
-                                              loadingProgress) =>
-                                          loadingProgress == null
-                                              ? child
-                                              : CircularProgressIndicator(
-                                            color: blueColor,
-                                          ),
-                                          errorBuilder:
-                                              (context, error, stackTrace) =>
-                                              Icon(Icons.error_outline),
                                         );
                                       },
                                     );
@@ -680,12 +670,12 @@ class _ProduitScreenState extends State<ProduitScreen> {
                                       listen: false)
                                       .addToCart(product, quantity,
                                       personalizationController.text);
+                                  Navigator.of(context).pop(); // Fermeture du dialogue
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                         content:
                                         Text('Produit ajouté au panier')),
                                   );
-                                  Navigator.of(context).pop(); // Fermeture du dialogue
                                   final CartController cartController = Get.find<CartController>();
                                   cartController.initialize();
                                 } catch (e) {

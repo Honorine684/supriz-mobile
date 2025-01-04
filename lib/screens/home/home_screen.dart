@@ -15,6 +15,7 @@ import '../historique/historique_screen.dart';
 import '../produits/supriz.dart';
 import '../profil/profil_screen.dart';
 import '../../services/auth_service.dart';
+import '../../services/publicite_service.dart'; // Import du service de publicité
 
 class HomeScreen extends StatefulWidget {
   final Function(int, String) onCategorySelected;
@@ -28,10 +29,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _userName = 'Invité';
   File? _profileImage;
+  late Future<List<Publicite>> _publicitesFuture;
+  late PubliciteService _publiciteService;
 
   @override
   void initState() {
     super.initState();
+    _publiciteService = PubliciteService();
+    _publicitesFuture = _publiciteService.fetchPublicites();
     _loadUserName();
     _loadProfileImage();
     profileImageNotifier.addListener(_updateProfileImage);
@@ -68,14 +73,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _userName = userName;
     });
   }
-
-  final List<Publicite> publicites = [
-    Publicite(
-        id: 1, pathImage: crsImg1, sousCategorie: 0, categorie: "Pantalons"),
-    Publicite(id: 2, pathImage: crsImg2, sousCategorie: 1, categorie: "Jupes"),
-    Publicite(id: 3, pathImage: crsImg3, sousCategorie: 2, categorie: "Robes"),
-    Publicite(id: 4, pathImage: crsImg4, sousCategorie: 0, categorie: "Vestes"),
-  ];
 
   final List<Map<String, dynamic>> gridItems = [
     {
@@ -117,9 +114,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-                ImageSwiper(
-                    publicites: publicites,
-                    onCategorySelected: widget.onCategorySelected),
+                FutureBuilder<List<Publicite>>(
+                  future: _publicitesFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator(
+                        color: blueColor,
+                      );
+                    } else if (snapshot.hasError) {
+                      return const Text("Erreur de chargement des publicités");
+                    } else {
+                      return ImageSwiper(
+                          publicites: snapshot.data!,
+                          onCategorySelected: widget.onCategorySelected);
+                    }
+                  },
+                ),
                 const SizedBox(height: 15),
                 ProductHeader(onPressed: () {
                   Navigator.push(
@@ -201,10 +211,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 backgroundImage: image != null ? FileImage(image) : null,
                 child: image == null
                     ? Icon(
-                        Icons.account_circle,
-                        color: blackColor,
-                        size: 28,
-                      )
+                  Icons.account_circle,
+                  color: blackColor,
+                  size: 28,
+                )
                     : null,
               );
             },
@@ -245,7 +255,7 @@ class ImageSwiper extends StatelessWidget {
         return GestureDetector(
           onTap: () {
             onCategorySelected(
-                publicite.sousCategorie ?? 0, publicite.categorie ?? "");
+                publicite.typeCategorieId ?? 0, publicite.nameSousCategories ?? "");
           },
           child: Container(
             decoration: BoxDecoration(
@@ -254,7 +264,7 @@ class ImageSwiper extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(15),
-              child: Image.asset(
+              child: Image.network(
                 publicite.pathImage,
                 height: MediaQuery.of(context).size.height * 0.25,
                 fit: BoxFit.fill,
@@ -286,7 +296,7 @@ class ProductHeader extends StatelessWidget {
           style: TextButton.styleFrom(
             backgroundColor: roscColor,
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           onPressed: onPressed,
           icon: const Icon(Icons.history, size: 18, color: Colors.black),
