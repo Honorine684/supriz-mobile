@@ -2,6 +2,8 @@
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../consts/colors.dart';
@@ -9,6 +11,7 @@ import '../../consts/images.dart';
 import '../../models/product.dart';
 import '../../services/product_service.dart';
 import '../../widgets/our_button.dart';
+import '../panier/cart_controller.dart';
 import '../panier/cart_provider.dart';
 
 class ProduitScreen extends StatefulWidget {
@@ -683,6 +686,8 @@ class _ProduitScreenState extends State<ProduitScreen> {
                                         Text('Produit ajouté au panier')),
                                   );
                                   Navigator.of(context).pop(); // Fermeture du dialogue
+                                  final CartController cartController = Get.find<CartController>();
+                                  cartController.initialize();
                                 } catch (e) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(

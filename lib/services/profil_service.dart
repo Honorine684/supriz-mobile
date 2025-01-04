@@ -12,8 +12,10 @@ class ProfilService {
 
   Future<Map<String, dynamic>> updateProfileImage(File image) async {
     String? token = await _getAuthToken();
-    final request = http.MultipartRequest('POST', Uri.parse('$domaineapi/update-profile-image'));
-    request.files.add(await http.MultipartFile.fromPath('profil_image', image.path));
+    final request = http.MultipartRequest(
+        'POST', Uri.parse('$domaineapi/update-profile-image'));
+    request.files
+        .add(await http.MultipartFile.fromPath('profil_image', image.path));
     request.headers['Authorization'] = 'Bearer $token';
 
     print('Sending request to update profile image...');
@@ -29,7 +31,8 @@ class ProfilService {
       print('Success: ${data}');
       return data;
     } else {
-      print('Failed to update profile image. Status code: ${response.statusCode}');
+      print(
+          'Failed to update profile image. Status code: ${response.statusCode}');
       throw Exception('Failed to update profile image');
     }
   }
@@ -73,7 +76,8 @@ class ProfilService {
     );
   }
 
-  Future<Map<String, dynamic>> updatePassword(String oldPassword, String newPassword) async {
+  Future<Map<String, dynamic>> updatePassword(
+      String oldPassword, String newPassword) async {
     return _updateProfile(
       endpoint: 'update-password',
       body: {'old_password': oldPassword, 'new_password': newPassword},
@@ -112,7 +116,4 @@ class ProfilService {
       throw Exception('Failed to update profile');
     }
   }
-
-
-
 }

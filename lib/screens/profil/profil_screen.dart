@@ -3,10 +3,13 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supriz/consts/consts.dart';
 import 'package:supriz/services/profil_service.dart';
+import 'package:velocity_x/velocity_x.dart';
 import '../../widgets/appbar_custom.dart';
 
 class ProfilScreen extends StatefulWidget {
@@ -18,10 +21,9 @@ class ProfilScreen extends StatefulWidget {
 
 class _ProfilScreenState extends State<ProfilScreen> {
   String? storedFirstname;
-  String? storedName; // Récupère le prénom depuis les prefs
-  String? storedNumero; // Récupère le prénom depuis les prefs
+  String? storedName;
+  String? storedNumero;
   String? storedEmail;
-  String? storedImage;
   bool _showingDialog = false;
   File? _profileImage;
 
@@ -29,7 +31,14 @@ class _ProfilScreenState extends State<ProfilScreen> {
   void initState() {
     super.initState();
     _chargeInfo();
-    // _loadProfileImage();
+    _loadProfileImage();
+    ;
+  }
+
+  @override
+  void dispose() {
+    profileImageNotifier.removeListener(_updateProfileImage);
+    super.dispose();
   }
 
   Future<void> _loadProfileImage() async {
@@ -42,6 +51,12 @@ class _ProfilScreenState extends State<ProfilScreen> {
         _profileImage = File(imagePath);
       });
     }
+  }
+
+  void _updateProfileImage() {
+    setState(() {
+      _profileImage = profileImageNotifier.value;
+    });
   }
 
   Future<void> _saveProfileImage(String imagePath) async {
@@ -190,12 +205,9 @@ class _ProfilScreenState extends State<ProfilScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       storedFirstname = prefs.getString('firstname');
-      storedName =
-          prefs.getString('name'); // Récupère le prénom depuis les prefs
-      storedNumero =
-          prefs.getString('numero'); // Récupère le prénom depuis les prefs
+      storedName = prefs.getString('name');
+      storedNumero = prefs.getString('numero');
       storedEmail = prefs.getString('email');
-      //storedImage = prefs.getString('profileImagePath');
     });
   }
 
@@ -217,14 +229,23 @@ class _ProfilScreenState extends State<ProfilScreen> {
                 Stack(
                   children: [
                     Center(
-                      child: CircleAvatar(
-                        backgroundColor: whiteColor,
-                        radius: profileImageSize / 2,
-                        child: Icon(
-                          Icons.account_circle,
-                          color: blackColor,
-                          size: profileImageSize + 10,
-                        ),
+                      child: ValueListenableBuilder<File?>(
+                        valueListenable: profileImageNotifier,
+                        builder: (context, image, child) {
+                          return CircleAvatar(
+                            backgroundColor: whiteColor,
+                            radius: profileImageSize / 2,
+                            backgroundImage:
+                                image != null ? FileImage(image) : null,
+                            child: image == null
+                                ? Icon(
+                                    Icons.account_circle,
+                                    color: blackColor,
+                                    size: profileImageSize + 10,
+                                  )
+                                : null,
+                          );
+                        },
                       ),
                     ),
                     Positioned(
@@ -458,30 +479,7 @@ class _ChangeNomPrenomScreenState extends State<ChangeNomPrenomScreen> {
     _chargeInfo();
     return Scaffold(
       backgroundColor: whiteColor,
-      appBar: AppBar(
-        flexibleSpace: Image.asset(
-          appbarImg,
-          fit: BoxFit.cover,
-        ),
-        title: const Text(
-          'Profil',
-          style: TextStyle(
-            color: whiteColor,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          color: whiteColor,
-          icon: const Icon(
-            Icons.arrow_back,
-            size: 28,
-          ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
+      appBar: CustomAppBar(title: "Profil"),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -527,20 +525,6 @@ class _ChangeNomPrenomScreenState extends State<ChangeNomPrenomScreen> {
                       style: const TextStyle(fontSize: 18),
                     ),
                   ),
-                  /*
-                  SizedBox(
-                    height: 50,
-                    child: TextField(
-                      controller: _prenomController,
-                      decoration: const InputDecoration(
-                        hintText: 'Entrer le nouveau prénom',
-                        hintStyle: TextStyle(fontSize: 16),
-                        border: OutlineInputBorder(),
-                      ),
-                      style: const TextStyle(fontSize: 18),
-                    ),
-                  ),
-                   */
                   const SizedBox(height: 20),
                   SizedBox(
                     width: 500,
@@ -922,29 +906,10 @@ class _ChangePhotoScreenState extends State<ChangePhotoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    double profileImageSize = MediaQuery.of(context).size.width / 2;
     return Scaffold(
       backgroundColor: whiteColor,
-      appBar: AppBar(
-        flexibleSpace: Image.asset(
-          appbarImg,
-          fit: BoxFit.cover,
-        ),
-        title: const Text(
-          'Profil',
-          style: TextStyle(
-            color: whiteColor,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          color: whiteColor,
-          icon: const Icon(Icons.arrow_back, size: 28),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
+      appBar: CustomAppBar(title: "Profil"),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -956,10 +921,17 @@ class _ChangePhotoScreenState extends State<ChangePhotoScreen> {
                   children: [
                     Center(
                       child: CircleAvatar(
+                        backgroundColor: whiteColor,
                         radius: 100,
-                        backgroundImage: _image != null
-                            ? FileImage(_image!)
-                            : const AssetImage(profilImag) as ImageProvider,
+                        backgroundImage:
+                            _image != null ? FileImage(_image!) : null,
+                        child: _image == null
+                            ? Icon(
+                                Icons.account_circle,
+                                color: blackColor,
+                                size: profileImageSize,
+                              )
+                            : null,
                       ),
                     ),
                   ],
@@ -978,26 +950,21 @@ class _ChangePhotoScreenState extends State<ChangePhotoScreen> {
                         horizontal: 16, vertical: 12),
                   ),
                   child: const Text('Choisir une photo de profil'),
-                ),
+                ).box.width(500).make(),
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: 500,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      _saveImage();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: blueColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
+                ElevatedButton(
+                  onPressed: _saveImage,
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: blueColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text('Enregistrer'),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                   ),
-                )
+                  child: const Text('Enregistrer'),
+                ).box.width(500).make(),
               ],
             ),
           ),

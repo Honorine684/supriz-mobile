@@ -1,10 +1,14 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_swiper_view/flutter_swiper_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supriz/screens/notifications/notifications_screen.dart';
 import '../../consts/colors.dart';
+import '../../consts/global.dart';
 import '../../consts/images.dart';
 import '../../models/publicite.dart';
 import '../historique/historique_screen.dart';
@@ -23,11 +27,39 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String _userName = 'Invité';
+  File? _profileImage;
 
   @override
   void initState() {
     super.initState();
     _loadUserName();
+    _loadProfileImage();
+    profileImageNotifier.addListener(_updateProfileImage);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).unfocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    profileImageNotifier.removeListener(_updateProfileImage);
+    super.dispose();
+  }
+
+  Future<void> _loadProfileImage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? imagePath = prefs.getString('profileImagePath');
+    if (imagePath != null) {
+      setState(() {
+        _profileImage = File(imagePath);
+      });
+    }
+  }
+
+  void _updateProfileImage() {
+    setState(() {
+      _profileImage = profileImageNotifier.value;
+    });
   }
 
   Future<void> _loadUserName() async {
@@ -160,7 +192,23 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
         IconButton(
-          icon: const Icon(Icons.account_circle, color: Colors.black),
+          icon: ValueListenableBuilder<File?>(
+            valueListenable: profileImageNotifier,
+            builder: (context, image, child) {
+              return CircleAvatar(
+                radius: 14,
+                backgroundColor: whiteColor,
+                backgroundImage: image != null ? FileImage(image) : null,
+                child: image == null
+                    ? Icon(
+                        Icons.account_circle,
+                        color: blackColor,
+                        size: 28,
+                      )
+                    : null,
+              );
+            },
+          ),
           onPressed: () {
             Navigator.push(
               context,

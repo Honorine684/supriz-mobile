@@ -141,10 +141,17 @@ class _PaymentPageState extends State<PaymentPage> {
                 keyboardType: TextInputType.number,
                 cursorColor: blueColor, // Couleur du curseur
                 maxLength: 8,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   counterText: '',
                   border: OutlineInputBorder(),
                   hintText: 'Entrer le numéro de paiement',
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.all(12.0), // Ajustez le padding selon vos besoins
+                    child: Text(
+                      "🇧🇯", // Drapeau du Bénin
+                      style: const TextStyle(fontSize: 20), // Taille ajustée
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 15),
@@ -223,7 +230,7 @@ class _PaymentPageState extends State<PaymentPage> {
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       )
                     : const Text('Lancer le décaissement'),
-              ).box.width(double.infinity).make(),
+              ).box.width(double.infinity).height(50).make(),
 
               const SizedBox(height: 24),
               const Text(

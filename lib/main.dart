@@ -1,11 +1,9 @@
 // ignore_for_file: prefer_const_constructors
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supriz/screens/panier/cart_controller.dart';
 import 'package:supriz/screens/panier/cart_provider.dart';
 import 'package:supriz/screens/splash/splash_screen.dart';
-import 'package:device_preview/device_preview.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import 'connection_checker.dart';
@@ -27,7 +25,6 @@ void main() {
   runApp(const Supriz());
 }
 
-
 class Supriz extends StatefulWidget {
   const Supriz({super.key});
 
@@ -42,7 +39,8 @@ class _SuprizState extends State<Supriz> {
   void initState() {
     super.initState();
     connectionChecker = ConnectionChecker();
-    connectionChecker.startConnectivityMonitor(onConnectionChanged: (hasInternet) {
+    connectionChecker.startConnectivityMonitor(
+        onConnectionChanged: (hasInternet) {
       if (!hasInternet) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Connexion Internet perdue')),
