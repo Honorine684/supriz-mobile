@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_const_constructors
-
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:supriz/screens/panier/payment_screen.dart';
@@ -11,8 +9,6 @@ import 'package:flutter/material.dart';
 import '../../services/panier_service.dart';
 import '../../widgets/our_button.dart';
 import 'cart_controller.dart';
-
-
 
 class PanierScreen extends StatefulWidget {
   const PanierScreen({super.key});
@@ -282,21 +278,10 @@ class _PanierScreenState extends State<PanierScreen> {
   }
 
   void showOrderDialog(BuildContext context) {
-    /*
     final fraisLivraison = cartController.cartItems.fold<int>(
       0,
       (sum, item) =>
-          sum +
-          ((item['product'].prixLivraison as num).round() * item['quantity'])
-              .toInt(),
-    );
-    */
-    final fraisLivraison = cartController.cartItems.fold<int>(
-    0,
-    (sum, item) =>
-    sum +
-    ((item['product'].prixLivraison as num).round())
-        .toInt(),
+          sum + ((item['product'].prixLivraison as num).round()).toInt(),
     );
 
     String selectedOption = 'Moi même';
@@ -332,7 +317,6 @@ class _PanierScreenState extends State<PanierScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Ajouter le titre "Livraison" en gras
                       const Text(
                         "Livraison",
                         style: TextStyle(
@@ -511,8 +495,6 @@ class _PanierScreenState extends State<PanierScreen> {
                         textColor: whiteColor,
                         text: "Valider",
                       ).box.width(double.infinity).make(),
-
-                      // Ajouter le texte de zone de livraison
                       const SizedBox(height: 16),
                       const Text(
                         "Livraison valable pour les zones de : (Cotonou,Akpakpa,Calavi,Hevié)",
@@ -584,6 +566,3 @@ class _PanierScreenState extends State<PanierScreen> {
     );
   }
 }
-
-
-

@@ -3,7 +3,10 @@ import 'package:supriz/consts/consts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../models/product.dart';
+
 class PanierService {
+  final List<Map<String, dynamic>> _cartItems = [];
 
   Future<String?> _getAuthToken() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance(); // Récupération des préférences

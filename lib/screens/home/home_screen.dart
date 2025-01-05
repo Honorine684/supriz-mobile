@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_swiper_view/flutter_swiper_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supriz/screens/notifications/notifications_screen.dart';
 import '../../consts/colors.dart';
 import '../../consts/global.dart';
@@ -264,10 +265,12 @@ class ImageSwiper extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(15),
-              child: Image.network(
-                publicite.pathImage,
+              child: CachedNetworkImage(
+                imageUrl: publicite.pathImage,
                 height: MediaQuery.of(context).size.height * 0.25,
                 fit: BoxFit.fill,
+                placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                errorWidget: (context, url, error) => Center(child: Icon(Icons.error)),
               ),
             ),
           ),

@@ -27,7 +27,8 @@ class CartController extends GetxController {
   }
 
   static String _getFullImageUrl(String path) {
-    const String baseUrl = '$domaineapiImage/';  // Remplacez par votre domaine de base
+    const String baseUrl =
+        '$domaineapiImage/'; // Remplacez par votre domaine de base
     return baseUrl + path;
   }
 
@@ -48,15 +49,20 @@ class CartController extends GetxController {
           'product': Product(
             id: achat['product']['id'],
             title: achat['product']['title'],
-            price: (achat['product']['prix_promo'] != null && achat['product']['prix_promo'] != 0)
+            price: (achat['product']['prix_promo'] != null &&
+                    achat['product']['prix_promo'] != 0)
                 ? achat['product']['prix_promo'].toDouble()
                 : (achat['product']['price'] as num?)?.toDouble() ?? 0.0,
             prixPromo: achat['product']['prix_promo'],
             evaluation: achat['product']['evaluation'],
-            description: achat['product']['description'] ?? "Pas de description",
+            description:
+                achat['product']['description'] ?? "Pas de description",
             prixLivraison: achat['product']['prixLivraison'],
             info: achat['product']['info'],
-            images: [achat['product']['photo_main'], achat['product']['photo_secondary']]
+            images: [
+              achat['product']['photo_main'],
+              achat['product']['photo_secondary']
+            ]
                 .where((image) => image != null)
                 .map((image) => _getFullImageUrl(image as String))
                 .toList(),
@@ -78,10 +84,12 @@ class CartController extends GetxController {
 
   void addToCart(Product product, int quantity, String personalisation) async {
     try {
-      final response = await panierService.addToCart(product.id, quantity, personalisation);
+      final response =
+          await panierService.addToCart(product.id, quantity, personalisation);
       print('Add to cart response: $response');
       if (response['status']) {
-        final index = cartItems.indexWhere((item) => item['product'] == product);
+        final index =
+            cartItems.indexWhere((item) => item['product'] == product);
         if (index >= 0) {
           cartItems[index]['quantity'] += quantity;
         } else {
@@ -109,22 +117,27 @@ class CartController extends GetxController {
 
       String? token = await _getAuthToken();
 
-      final response = await http.post(
-        Uri.parse('$domaineapi/update-quantity'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'achat_id': achat_id,
-          'qte_achat': quantity,
-        }),
-      );
+      try {
+        final response = await http.post(
+          Uri.parse('$domaineapi/update-quantity'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'achat_id': achat_id,
+            'qte_achat': quantity,
+          }),
+        );
 
-      if (response.statusCode == 200) {
-        print('Quantité mise à jour avec succès !');
-      } else {
-        print('Erreur lors de la mise à jour de la quantité : ${response.body}');
+        if (response.statusCode == 200) {
+          print('Quantité mise à jour avec succès !');
+        } else {
+          print(
+              'Erreur lors de la mise à jour de la quantité : ${response.body}');
+        }
+      } catch (e) {
+        print('Erreur de connexion : $e');
       }
     } else {
       print('Produit non trouvé dans le panier ou quantité invalide.');
@@ -152,7 +165,8 @@ class CartController extends GetxController {
           cartItems.removeAt(index);
           update(); // Notifier les écouteurs des changements
         } else {
-          print('Erreur lors de la suppression de l\'article : ${responseBody['message']}');
+          print(
+              'Erreur lors de la suppression de l\'article : ${responseBody['message']}');
         }
       } else {
         print('Produit non trouvé dans le panier.');
@@ -217,9 +231,10 @@ class CartController extends GetxController {
       double productPrice;
 
       if (product.price is String) {
-        productPrice = double.tryParse(
-            (product.price as String).replaceAll('.', '').replaceAll(',', '.')
-        ) ?? 0.0;
+        productPrice = double.tryParse((product.price as String)
+                .replaceAll('.', '')
+                .replaceAll(',', '.')) ??
+            0.0;
       } else if (product.price is double) {
         productPrice = product.price;
       } else {
@@ -248,7 +263,8 @@ class CartItem extends StatelessWidget {
   final VoidCallback onSelected;
   final VoidCallback onRemove;
 
-  const CartItem({super.key,
+  const CartItem({
+    super.key,
     required this.index,
     required this.quantity,
     required this.isSelected,
