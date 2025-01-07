@@ -27,8 +27,7 @@ class CartController extends GetxController {
   }
 
   static String _getFullImageUrl(String path) {
-    const String baseUrl =
-        '$domaineapiImage/'; // Remplacez par votre domaine de base
+    const String baseUrl = '$domaineapiImage/';
     return baseUrl + path;
   }
 
@@ -132,6 +131,8 @@ class CartController extends GetxController {
 
         if (response.statusCode == 200) {
           print('Quantité mise à jour avec succès !');
+          cartItems.refresh();
+          update();
         } else {
           print(
               'Erreur lors de la mise à jour de la quantité : ${response.body}');
@@ -336,7 +337,7 @@ class CartItem extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${product.price} FCFA',
+                      '${product.price.toInt()} FCFA',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -348,6 +349,8 @@ class CartItem extends StatelessWidget {
                         GestureDetector(
                           onTap: () {
                             if (quantity > 1) {
+                              Get.find<CartController>()
+                                  .update(); // Forcer la mise à jour de l'interface utilisateur
                               onQuantityChanged(quantity - 1);
                             }
                           },
@@ -367,6 +370,8 @@ class CartItem extends StatelessWidget {
                         const SizedBox(width: 10),
                         GestureDetector(
                           onTap: () {
+                            Get.find<CartController>()
+                                .update(); // Forcer la mise à jour de l'interface utilisateur
                             onQuantityChanged(quantity + 1);
                           },
                           child: const Icon(

@@ -305,7 +305,7 @@ class _ProduitScreenState extends State<ProduitScreen> {
                     ),
                   ),
                   Text(
-                    '${product.price} FCFA',
+                    '${product.price.toInt()} FCFA',
                     style: const TextStyle(
                       color: blackprice,
                       fontSize: 18,
@@ -313,7 +313,7 @@ class _ProduitScreenState extends State<ProduitScreen> {
                   ),
                   if (product.prixPromo != null && product.prixPromo != 0)
                     Text(
-                      '${product.prixPromo} FCFA',
+                      '${product.prixPromo?.toInt()} FCFA',
                       style: const TextStyle(
                         fontSize: 14,
                         color: Colors.grey,
@@ -522,7 +522,7 @@ class _ProduitScreenState extends State<ProduitScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                '${product.price} FCFA',
+                                '${product.price.toInt()} FCFA',
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -673,6 +673,7 @@ class _ProduitScreenState extends State<ProduitScreen> {
                                   Navigator.of(context).pop(); // Fermeture du dialogue
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
+                                        backgroundColor: blueColor,
                                         content:
                                         Text('Produit ajouté au panier')),
                                   );

@@ -166,7 +166,7 @@ class AuthService {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Connexion réussie !'),
-              backgroundColor: Colors.blue, // Utiliser Colors.blue au lieu de blueColor pour éviter les erreurs
+              backgroundColor: blueColor, // Utiliser Colors.blue au lieu de blueColor pour éviter les erreurs
             ),
           );
 

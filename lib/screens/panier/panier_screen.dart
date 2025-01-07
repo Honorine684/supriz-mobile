@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:supriz/screens/panier/payment_screen.dart';
 import 'package:supriz/widgets/appbar_custom.dart';
@@ -145,6 +144,8 @@ class _PanierScreenState extends State<PanierScreen> {
                     quantity: quantity,
                     isSelected: cartItem['isSelected'] ?? false,
                     onQuantityChanged: (newQuantity) {
+                      Get.find<CartController>()
+                          .update(); // Forcer la mise à jour de l'interface utilisateur
                       cartController.updateQuantity(
                           product, newQuantity, achat_id);
                     },
