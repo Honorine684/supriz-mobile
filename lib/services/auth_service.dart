@@ -166,7 +166,7 @@ class AuthService {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Connexion réussie !'),
-              backgroundColor: blueColor,
+              backgroundColor: blueColor, // Utiliser Colors.blue au lieu de blueColor pour éviter les erreurs
             ),
           );
 
@@ -177,6 +177,7 @@ class AuthService {
           await prefs.setString('name', responseData['name']); // Stocker le nom de l'utilisateur
           await prefs.setString('numero', responseData['numero']); // Stocker le numéro de l'utilisateur
           await prefs.setString('email', responseData['email']); // Stocker l'email de l'utilisateur
+          await prefs.setString('image', responseData['image']); // Stocker l'URL de l'image de profil de l'utilisateur
 
           // Récupérer immédiatement les achats après la connexion
           final cartController = Get.find<CartController>();
@@ -215,6 +216,12 @@ class AuthService {
         ),
       );
     }
+  }
+
+
+  Future<String> getUserImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('image') ?? '';
   }
 
   Future<String> getUserName() async {
