@@ -22,6 +22,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
   int _currentIndex = 0;
   int _selectedCategoryIndex = 0;
   String _selectedSubCategory = "T-shirts";
+  DateTime? _lastPressedAt; // Variable pour enregistrer le moment du premier appui
 
   final List<Widget> _pages = [];
 
@@ -51,16 +52,28 @@ class _BottomNavigationState extends State<BottomNavigation> {
     final screenHeight = MediaQuery.of(context).size.height;
     final cartController = Get.find<CartController>();
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: _pages[_currentIndex],
-      bottomNavigationBar: _buildBottomNavigationBar(screenHeight),
-      floatingActionButton: Obx(() {
-        final cartItemCount = cartController.distinctProductCount;
-        return _buildFloatingActionButton(cartItemCount);
-      }),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: _pages[_currentIndex],
+        bottomNavigationBar: _buildBottomNavigationBar(screenHeight),
+        floatingActionButton: Obx(() {
+          final cartItemCount = cartController.distinctProductCount;
+          return _buildFloatingActionButton(cartItemCount);
+        }),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      ),
     );
+  }
+
+  Future<bool> _onWillPop() async {
+    if (_lastPressedAt == null || DateTime.now().difference(_lastPressedAt!) > Duration(seconds: 2)) {
+      // Premier appui ou délai dépassé
+      _lastPressedAt = DateTime.now();
+      return false; // Empêche la fermeture de l'application
+    }
+    return true; // Permet la fermeture de l'application
   }
 
   // Barre de navigation inférieure

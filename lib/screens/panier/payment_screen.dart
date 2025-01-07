@@ -95,7 +95,7 @@ class _PaymentPageState extends State<PaymentPage> {
                           fontSize: 16,
                           color: blueColor,
                           fontWeight: FontWeight.bold)),
-                  Text('${cartController.totalAmount} FCFA',
+                  Text('${cartController.totalAmount.toInt()} FCFA',
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold)),
                 ],
@@ -127,7 +127,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     ),
                   ),
                   Text(
-                    '$totalAmount FCFA',
+                    '${totalAmount.toInt()} FCFA',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
