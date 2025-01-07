@@ -43,14 +43,41 @@ class _ProfilScreenState extends State<ProfilScreen> {
 
   Future<void> _loadProfileImage() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    // Récupère le prénom depuis les prefs
-    String? imagePath = prefs.getString('profileImagePath');
+    String? localImagePath = prefs.getString('localProfileImagePath');
 
-    if (imagePath != null) {
-      setState(() {
-        _profileImage = File(imagePath);
-      });
+    if (localImagePath != null && File(localImagePath).existsSync()) {
+      print('Local Image Path: $localImagePath'); // Ajoutez cette ligne pour le débogage
+      profileImageNotifier.value = File(localImagePath);
+    } else {
+      String? profileImagePath = prefs.getString('profileImagePath');
+      if (profileImagePath != null) {
+        String fullImagePath = "$domaineapiImage/$profileImagePath";
+        print('Profile Image Path: $fullImagePath'); // Ajoutez cette ligne pour le débogage
+
+        File? imageFile = await _downloadImage(fullImagePath);
+        if (imageFile != null) {
+          await prefs.setString('localProfileImagePath', imageFile.path);
+          profileImageNotifier.value = imageFile;
+        }
+      }
     }
+  }
+
+
+  Future<File?> _downloadImage(String url) async {
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final directory = await getTemporaryDirectory();
+        final file = File('${directory.path}/profile_image.jpg');
+        await file.writeAsBytes(response.bodyBytes);
+        print('Image downloaded to ${file.path}'); // Ajoutez cette ligne pour le débogage
+        return file;
+      }
+    } catch (e) {
+      print('Error downloading image: $e');
+    }
+    return null;
   }
 
   void _updateProfileImage() {
@@ -891,13 +918,14 @@ class _ChangePhotoScreenState extends State<ChangePhotoScreen> {
         final response = await _ProfilService.updateProfileImage(_image!);
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('profileImagePath', _image!.path);
+        await prefs.setString('localProfileImagePath', _image!.path); // Enregistrer le chemin local
         profileImageNotifier.value = _image;
         Navigator.of(context).pop(_image);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content:
-                Text('Erreur lors de la mise à jour de la photo de profil: $e'),
+            Text('Erreur lors de la mise à jour de la photo de profil: $e'),
           ),
         );
       }
@@ -924,13 +952,13 @@ class _ChangePhotoScreenState extends State<ChangePhotoScreen> {
                         backgroundColor: whiteColor,
                         radius: 100,
                         backgroundImage:
-                            _image != null ? FileImage(_image!) : null,
+                        _image != null ? FileImage(_image!) : null,
                         child: _image == null
                             ? Icon(
-                                Icons.account_circle,
-                                color: blackColor,
-                                size: profileImageSize,
-                              )
+                          Icons.account_circle,
+                          color: blackColor,
+                          size: profileImageSize,
+                        )
                             : null,
                       ),
                     ),

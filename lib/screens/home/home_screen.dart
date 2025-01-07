@@ -1,21 +1,18 @@
-// ignore_for_file: prefer_const_constructors
-
 import 'dart:io';
-
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_swiper_view/flutter_swiper_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:supriz/consts/consts.dart';
 import 'package:supriz/screens/notifications/notifications_screen.dart';
-import '../../consts/colors.dart';
-import '../../consts/global.dart';
-import '../../consts/images.dart';
 import '../../models/publicite.dart';
 import '../historique/historique_screen.dart';
 import '../produits/supriz.dart';
 import '../profil/profil_screen.dart';
 import '../../services/auth_service.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../services/publicite_service.dart'; // Import du service de publicité
 
 class HomeScreen extends StatefulWidget {
@@ -36,10 +33,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _loadProfileImage();
     _publiciteService = PubliciteService();
     _publicitesFuture = _publiciteService.fetchPublicites();
     _loadUserName();
-    _loadProfileImage();
     profileImageNotifier.addListener(_updateProfileImage);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusScope.of(context).unfocus();
@@ -54,13 +51,43 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadProfileImage() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? imagePath = prefs.getString('profileImagePath');
-    if (imagePath != null) {
-      setState(() {
-        _profileImage = File(imagePath);
-      });
+    String? localImagePath = prefs.getString('localProfileImagePath');
+
+    if (localImagePath != null && File(localImagePath).existsSync()) {
+      print('Local Image Path: $localImagePath'); // Ajoutez cette ligne pour le débogage
+      profileImageNotifier.value = File(localImagePath);
+    } else {
+      String? profileImagePath = prefs.getString('profileImagePath');
+      if (profileImagePath != null) {
+        String fullImagePath = "$domaineapiImage/$profileImagePath";
+        print('Profile Image Path: $fullImagePath'); // Ajoutez cette ligne pour le débogage
+
+        File? imageFile = await _downloadImage(fullImagePath);
+        if (imageFile != null) {
+          await prefs.setString('localProfileImagePath', imageFile.path);
+          profileImageNotifier.value = imageFile;
+        }
+      }
     }
   }
+
+
+  Future<File?> _downloadImage(String url) async {
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final directory = await getTemporaryDirectory();
+        final file = File('${directory.path}/profile_image.jpg');
+        await file.writeAsBytes(response.bodyBytes);
+        print('Image downloaded to ${file.path}'); // Ajoutez cette ligne pour le débogage
+        return file;
+      }
+    } catch (e) {
+      print('Error downloading image: $e');
+    }
+    return null;
+  }
+
 
   void _updateProfileImage() {
     setState(() {
