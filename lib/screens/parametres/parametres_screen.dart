@@ -6,6 +6,7 @@ import 'package:supriz/screens/historique/historique_screen.dart';
 import 'package:supriz/screens/notifications/notifications_screen.dart';
 import 'package:supriz/screens/profil/profil_screen.dart';
 import '../../services/auth_service.dart';
+import '../../services/cache_service.dart';
 import '../../widgets/appbar_custom.dart';
 
 class ParametresScreen extends StatefulWidget {
@@ -18,6 +19,20 @@ class ParametresScreen extends StatefulWidget {
 class _ParametresScreenState extends State<ParametresScreen> {
   bool _showingDialog = false;
   bool _isLoading = false;
+  String _cacheSize = 'Calcul...';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCacheSize();
+  }
+
+  Future<void> _loadCacheSize() async {
+    final size = await CacheService.getCacheSize();
+    if (mounted) {
+      setState(() => _cacheSize = size);
+    }
+  }
 
   void setLoading(bool isLoading) {
     setState(() {
@@ -116,6 +131,208 @@ class _ParametresScreenState extends State<ParametresScreen> {
         AuthService().deleteUser(context, setLoading);
       },
       isDeleteAccount: true,
+    );
+  }
+
+  void _showCacheDialog(BuildContext context) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final details = await CacheService.getCacheDetails();
+
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: this.context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: greyColor.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  'Gestion du cache',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: blackColor,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Libérez de l\'espace en vidant le cache de l\'application.',
+                  style: TextStyle(color: greyColor, fontSize: 14),
+                ),
+                SizedBox(height: 24),
+
+                // Détails du cache
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: cloudColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildCacheDetailRow('Images en cache', details['cache'] ?? '0 B'),
+                      Divider(height: 20),
+                      _buildCacheDetailRow('Fichiers temporaires', details['temp'] ?? '0 B'),
+                      Divider(height: 20),
+                      _buildCacheDetailRow('Total', details['total'] ?? '0 B', isTotal: true),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 24),
+
+                // Bouton vider le cache
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      setState(() => _isLoading = true);
+
+                      final success = await CacheService.clearAllCache();
+
+                      if (mounted) {
+                        setState(() => _isLoading = false);
+                        await _loadCacheSize();
+
+                        scaffoldMessenger.showSnackBar(
+                          SnackBar(
+                            content: Text(success
+                                ? 'Cache vidé avec succès'
+                                : 'Erreur lors du vidage du cache'),
+                            backgroundColor: success ? Colors.green : Colors.red,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                    icon: Icon(Icons.delete_sweep, color: whiteColor),
+                    label: Text('Vider tout le cache'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: blueColor,
+                      foregroundColor: whiteColor,
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 12),
+
+                // Bouton vider uniquement les images
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      setState(() => _isLoading = true);
+
+                      final success = await CacheService.clearImageCache();
+
+                      if (mounted) {
+                        setState(() => _isLoading = false);
+                        await _loadCacheSize();
+
+                        scaffoldMessenger.showSnackBar(
+                          SnackBar(
+                            content: Text(success
+                                ? 'Cache images vidé'
+                                : 'Erreur lors du vidage'),
+                            backgroundColor: success ? Colors.green : Colors.red,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                    icon: Icon(Icons.image_outlined, color: blueColor),
+                    label: Text('Vider le cache images uniquement'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: blueColor,
+                      side: BorderSide(color: blueColor),
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCacheDetailRow(String label, String value, {bool isTotal = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: isTotal ? 16 : 14,
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            color: blackColor,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isTotal ? 16 : 14,
+            fontWeight: FontWeight.bold,
+            color: isTotal ? blueColor : greyColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCacheRow(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showCacheDialog(context),
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+        decoration: BoxDecoration(
+          color: cloudColor,
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Row(
+          children: [
+            Text(
+              "Gérer le cache",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Spacer(),
+            Text(
+              _cacheSize,
+              style: TextStyle(color: greyColor, fontSize: 14),
+            ),
+            SizedBox(width: 8),
+            Icon(Icons.chevron_right, color: greyColor, size: 20),
+          ],
+        ),
+      ),
     );
   }
 
@@ -219,6 +436,8 @@ class _ParametresScreenState extends State<ParametresScreen> {
                 SizedBox(height: spacing / 2),
                 _buildInfoRow(context, "Modifier mon profil", ProfilScreen()),
                 SizedBox(height: spacing / 2),
+                _buildCacheRow(context),
+                SizedBox(height: spacing / 2),
                 _buildInfoRow(context, "Supprimer mon compte",
                         () => _showDeleteAccountDialog(context)),
                 SizedBox(height: spacing / 2),
@@ -229,8 +448,8 @@ class _ParametresScreenState extends State<ParametresScreen> {
             ),
           ),
           if (_showingDialog)
-            Positioned(
-              child: Container(color: Colors.black.withOpacity(0.2)),
+            Positioned.fill(
+              child: Container(color: Colors.black.withValues(alpha: 0.2)),
             ),
           if (_isLoading)
             Positioned.fill(
@@ -260,7 +479,7 @@ class CondicUtilisation extends StatelessWidget {
           children: [
             Center(
               child: Text(
-                "Conditions Générales d'utilisation de SUPRIZ",
+                "Conditions Générales d'Utilisation – Supriz",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -270,130 +489,116 @@ class CondicUtilisation extends StatelessWidget {
             ),
             SizedBox(height: 20),
             Text(
-              "Dernière mise à jour : ..........",
+              "Dernière mise à jour: 31 janvier 2026",
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 20),
+
+            // 1. Acceptation
             Text(
-              "Bienvenue sur Supriz ! En utilisant notre application, vous acceptez les présentes conditions générales d'utilisation. Veuillez les lire attentivement.",
-              style: TextStyle(fontSize: 14),
-            ),
-            SizedBox(height: 10),
-            Text(
-              "Acceptation des Conditions",
+              "1. Acceptation de l'utilisateur",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 5),
+            SizedBox(height: 8),
             Text(
-              "En accédant et en utilisant l'application Supriz, vous acceptez d'être lié par les présentes conditions générales. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser notre application.",
+              "En utilisant l'application Supriz, vous acceptez pleinement et sans réserve les présentes Conditions Générales d'Utilisation. Si vous n'êtes pas d'accord avec l'une de ces dispositions, vous devez cesser immédiatement d'utiliser l'application.",
               style: TextStyle(fontSize: 14),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 16),
+
+            // 2. Utilisation
             Text(
-              "Utilisation de l'Application",
+              "2. Utilisation de l'application",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 5),
+            SizedBox(height: 8),
             Text(
-              "Supriz vous permet de :",
+              "Supriz est une application destinée à :",
               style: TextStyle(fontSize: 14),
             ),
+            SizedBox(height: 4),
+            Text("• Envoyer et partager des messages émotionnels.", style: TextStyle(fontSize: 14)),
+            Text("• Programmer des événements (comme des anniversaires) et recevoir des rappels.", style: TextStyle(fontSize: 14)),
+            Text("• Créer des liens personnalisés avec une durée de validité ajustable (Lecture unique, 24h, 48h, 72h, 7 jours).", style: TextStyle(fontSize: 14)),
+            Text("• Ajouter des images et choisir des arrière-plans variés.", style: TextStyle(fontSize: 14)),
+            Text("• Permettre aux destinataires de réagir avec des smileys.", style: TextStyle(fontSize: 14)),
+            Text("• Améliorer les messages grâce à une analyse par intelligence artificielle.", style: TextStyle(fontSize: 14)),
+            SizedBox(height: 8),
             Text(
-              "- Parcourir et acheter des produits pour différentes occasions.",
+              "L'utilisateur s'engage à utiliser Supriz de manière respectueuse et à ne pas diffuser de contenus illégaux, offensants ou contraires aux bonnes mœurs.",
               style: TextStyle(fontSize: 14),
             ),
+            SizedBox(height: 16),
+
+            // 3. Compte utilisateur
             Text(
-              "- Envoyer des souhaits et des messages pour créer des cartes de vœux personnalisées.",
-              style: TextStyle(fontSize: 14),
-            ),
-            SizedBox(height: 10),
-            Text(
-              "Comptes Utilisateurs",
+              "3. Compte utilisateur",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 5),
+            SizedBox(height: 8),
+            Text("• La création d'un compte nécessite une adresse email et un numéro de téléphone.", style: TextStyle(fontSize: 14)),
+            Text("• Ces informations sont utilisées uniquement pour l'accès aux fonctionnalités avancées et restent confidentielles.", style: TextStyle(fontSize: 14)),
+            Text("• L'utilisateur est responsable de la confidentialité de ses identifiants et de l'exactitude des informations fournies.", style: TextStyle(fontSize: 14)),
+            Text("• Supriz se réserve le droit de suspendre ou supprimer un compte en cas d'utilisation abusive ou frauduleuse.", style: TextStyle(fontSize: 14)),
+            SizedBox(height: 16),
+
+            // 4. Version payante
             Text(
-              "Pour utiliser certaines fonctionnalités de l'application, vous devez créer un compte utilisateur. Vous êtes responsable de la confidentialité de vos informations de compte et de toutes les activités qui se produisent sous votre compte.",
-              style: TextStyle(fontSize: 14),
-            ),
-            SizedBox(height: 10),
-            Text(
-              "Commandes et Paiements",
+              "4. Version payante (si applicable)",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 5),
+            SizedBox(height: 8),
+            Text("• Certaines fonctionnalités futures de Supriz pourraient être proposées sous forme payante.", style: TextStyle(fontSize: 14)),
+            Text("• Les modalités de paiement, remboursement et sécurité des transactions seront précisées au moment de leur mise en place.", style: TextStyle(fontSize: 14)),
+            Text("• L'utilisateur sera informé avant toute activation de services payants.", style: TextStyle(fontSize: 14)),
+            SizedBox(height: 16),
+
+            // 5. Propriété intellectuelle
             Text(
-              "Commandes: En passant une commande sur Supriz, vous acceptez de fournir des informations exactes et complètes.",
-              style: TextStyle(fontSize: 14),
-            ),
-            Text(
-              "Paiements: Tous les paiements doivent être effectués via les méthodes de paiement disponibles sur l'application. Nous utilisons des prestataires de services tiers pour traiter les paiements.",
-              style: TextStyle(fontSize: 14),
-            ),
-            SizedBox(height: 10),
-            Text(
-              "Livraison",
+              "5. Propriété intellectuelle",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 5),
+            SizedBox(height: 8),
+            Text("• Le nom, le logo, le design et les éléments graphiques de Supriz sont protégés par les lois sur la propriété intellectuelle.", style: TextStyle(fontSize: 14)),
+            Text("• L'utilisateur conserve la propriété de ses messages et images, mais accorde à Supriz une licence limitée pour leur utilisation dans le cadre du fonctionnement de l'application.", style: TextStyle(fontSize: 14)),
+            Text("• Toute reproduction ou utilisation non autorisée des éléments de Supriz est interdite.", style: TextStyle(fontSize: 14)),
+            SizedBox(height: 16),
+
+            // 6. Modification
             Text(
-              "Nous nous efforçons de livrer les produits dans les délais indiqués. Cependant, des retards peuvent survenir en raison de circonstances indépendantes de notre volonté. Nous ne sommes pas responsables des retards de livraison.",
-              style: TextStyle(fontSize: 14),
-            ),
-            SizedBox(height: 10),
-            Text(
-              "Propriété Intellectuelle",
+              "6. Modification des conditions",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 5),
+            SizedBox(height: 8),
             Text(
-              "Tous les contenus présents sur l'application Supriz, y compris les textes, images, logos et graphiques, sont protégés par des droits d'auteur et autres droits de propriété intellectuelle. Vous ne pouvez pas utiliser ces contenus sans notre autorisation préalable.",
+              "Supriz se réserve le droit de modifier les présentes Conditions Générales d'Utilisation à tout moment. Les utilisateurs seront informés des changements et devront accepter les nouvelles conditions pour continuer à utiliser l'application.",
               style: TextStyle(fontSize: 14),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 16),
+
+            // 7. Loi applicable
             Text(
-              "Limitation de Responsabilité",
+              "7. Loi applicable et juridiction",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 5),
+            SizedBox(height: 8),
             Text(
-              "Supriz ne sera pas responsable des dommages directs, indirects, accessoires, spéciaux ou consécutifs résultant de l'utilisation ou de l'incapacité à utiliser notre application. Mais nous nous engageons à vous donner quelques instructions pour son utilisation.",
+              "Les présentes conditions sont régies par la législation en vigueur au Bénin. En cas de litige, les tribunaux compétents du Bénin seront seuls habilités à en connaître.",
               style: TextStyle(fontSize: 14),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 16),
+
+            // 8. Contact
             Text(
-              "Modifications des Conditions",
+              "8. Contact",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 5),
+            SizedBox(height: 8),
             Text(
-              "Nous nous réservons le droit de modifier ces conditions générales à tout moment. Les modifications seront effectives dès leur publication sur l'application. Il est de votre responsabilité de consulter régulièrement les conditions générales.",
+              "Pour toute question ou demande relative aux présentes conditions, vous pouvez contacter l'assistance directement via l'application Supriz.",
               style: TextStyle(fontSize: 14),
             ),
-            SizedBox(height: 10),
-            Text(
-              "Loi Applicable et Juridiction",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 5),
-            Text(
-              "Tout litige pouvant naître de l'exécution ou de l'interprétation du Contrat sera réglé à l'amiable.",
-              style: TextStyle(fontSize: 14),
-            ),
-            Text(
-              "A défaut d'accord, les tribunaux compétents seront ceux du ressort de la juridiction du siège social de Supriz.",
-              style: TextStyle(fontSize: 14),
-            ),
-            SizedBox(height: 10),
-            Text(
-              "Contact",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 5),
-            Text(
-              "Si vous avez des questions sur les présentes Conditions Générales d'Utilisation, veuillez nous écrire par e-mail à l'adresse suivante : support@supriz.com",
-              style: TextStyle(fontSize: 14),
-            ),
+            SizedBox(height: 30),
           ],
         ),
       ),

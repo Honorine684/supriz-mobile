@@ -82,13 +82,27 @@ class _ResetPwdState extends State<ResetPwd> {
                 obscureText: !_isPasswordVisible,
                 decoration: InputDecoration(
                   hintText: 'Nouveau mot de passe',
-                  border: OutlineInputBorder(),
+                  hintStyle: TextStyle(color: greyColor, fontSize: 14),
+                  filled: true,
+                  fillColor: greyColor.withValues(alpha: 0.1),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  prefixIcon: Icon(Icons.lock_outline, color: greyColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: blueColor),
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: blueColor, width: 2),
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      color: greyColor,
                     ),
                     onPressed: () {
                       setState(() {
@@ -98,23 +112,37 @@ class _ResetPwdState extends State<ResetPwd> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-        
+              const SizedBox(height: 16),
+
               // Champ pour la confirmation du mot de passe
               TextField(
                 controller: _confirmPasswordController,
                 obscureText: !_isConfirmPasswordVisible,
                 decoration: InputDecoration(
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: blueColor),
-                  ),
                   hintText: 'Confirmer le mot de passe',
-                  border: OutlineInputBorder(),
+                  hintStyle: TextStyle(color: greyColor, fontSize: 14),
+                  filled: true,
+                  fillColor: greyColor.withValues(alpha: 0.1),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  prefixIcon: Icon(Icons.lock_outline, color: greyColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: blueColor, width: 2),
+                  ),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _isConfirmPasswordVisible
                           ? Icons.visibility
                           : Icons.visibility_off,
+                      color: greyColor,
                     ),
                     onPressed: () {
                       setState(() {

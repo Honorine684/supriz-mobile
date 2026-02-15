@@ -15,4 +15,12 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
+    <!-- Theme for UCrop image cropper -->
+    <style name="UCropTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">#005792</item>
+        <item name="colorPrimaryDark">#004472</item>
+        <item name="colorAccent">#005792</item>
+        <item name="android:statusBarColor">#004472</item>
+        <item name="android:fitsSystemWindows">true</item>
+    </style>
 </resources>

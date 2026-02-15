@@ -11,6 +11,7 @@ import '../screens/auth/opt_screen.dart';
 import '../screens/auth/reset_pwd.dart';
 import '../screens/home/bottom_navigation.dart';
 import '../screens/panier/cart_controller.dart';
+import 'firebase_notification_service.dart';
 
 class AuthService {
 
@@ -172,19 +173,27 @@ class AuthService {
 
           // Stocker le token dans shared_preferences
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('token', responseData['token']);
+          await prefs.setString('token', responseData['token'] ?? '');
           await prefs.setBool('isLoggedIn', true);
-          await prefs.setString('name', responseData['name']); // Stocker le nom de l'utilisateur
-          await prefs.setString('numero', responseData['numero']); // Stocker le numéro de l'utilisateur
-          await prefs.setString('email', responseData['email']); // Stocker l'email de l'utilisateur
-          await prefs.setString('profileImagePath', responseData['image']); // Stocker l'URL de l'image de profil de l'utilisateur
+          await prefs.setString('name', responseData['name'] ?? ''); // Stocker le nom de l'utilisateur
+          await prefs.setString('numero', responseData['numero'] ?? ''); // Stocker le numéro de l'utilisateur
+          await prefs.setString('email', responseData['email'] ?? ''); // Stocker l'email de l'utilisateur
+          await prefs.setString('profileImagePath', responseData['image'] ?? ''); // Stocker l'URL de l'image de profil de l'utilisateur
 
-          // Vérifiez que l'URL de l'image est correctement stockée
-          print('Profile Image Path Stored: ${responseData['image']}');
+          // Récupérer immédiatement les achats après la connexion (si disponible)
+          try {
+            final cartController = Get.find<CartController>();
+            await cartController.fetchAchats();
+          } catch (e) {
+            // CartController non initialisé, ignorer
+          }
 
-          // Récupérer immédiatement les achats après la connexion
-          final cartController = Get.find<CartController>();
-          await cartController.fetchAchats();
+          // Envoyer le token FCM au backend
+          try {
+            await FirebaseNotificationService().sendTokenToBackend();
+          } catch (e) {
+            // Ignorer les erreurs FCM
+          }
 
           // Rediriger vers la page d'accueil
           Navigator.pushAndRemoveUntil(
@@ -364,6 +373,203 @@ class AuthService {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(responseBody['message']),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (error) {
+      setLoading(false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur réseau: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // Essayer une connexion sociale directe (retourne true si réussi, false si numéro requis)
+  Future<bool> trySocialLogin({
+    required String provider,
+    required String token,
+    required String email,
+    required String name,
+    required BuildContext context,
+    required Function setLoading,
+  }) async {
+    setLoading(true);
+
+    final url = Uri.parse('$domaineapi/social-login');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'provider': provider,
+          'token': token,
+          'email': email,
+          'name': name,
+        }),
+      );
+
+      setLoading(false);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['status']) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Connexion réussie !'),
+              backgroundColor: blueColor,
+            ),
+          );
+
+          // Stocker les informations utilisateur
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', responseData['token']);
+          await prefs.setBool('isLoggedIn', true);
+          await prefs.setString('name', responseData['name'] ?? name);
+          await prefs.setString('email', responseData['email'] ?? email);
+          await prefs.setString('numero', responseData['numero'] ?? '');
+          await prefs.setString('profileImagePath', responseData['image'] ?? '');
+
+          // Récupérer les achats
+          try {
+            final cartController = Get.find<CartController>();
+            await cartController.fetchAchats();
+          } catch (e) {
+            // CartController non initialisé, ignorer
+          }
+
+          // Envoyer le token FCM au backend
+          try {
+            await FirebaseNotificationService().sendTokenToBackend();
+          } catch (e) {
+            // Ignorer les erreurs FCM
+          }
+
+          // Rediriger vers la page d'accueil
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const BottomNavigation()),
+            (Route<dynamic> route) => false,
+          );
+          return true;
+        }
+        return false;
+      } else if (response.statusCode == 422) {
+        // Numéro requis - nouvel utilisateur
+        return false;
+      }
+      return false;
+    } catch (error) {
+      setLoading(false);
+      return false;
+    }
+  }
+
+  // Méthode pour la connexion sociale (Google/Apple)
+  Future<void> socialLogin({
+    required String provider,
+    required String token,
+    required String email,
+    required String name,
+    String? numero,
+    required BuildContext context,
+    required Function setLoading,
+  }) async {
+    setLoading(true);
+
+    final url = Uri.parse('$domaineapi/social-login');
+
+    try {
+      final Map<String, dynamic> body = {
+        'provider': provider,
+        'token': token,
+        'email': email,
+        'name': name,
+      };
+
+      // Ajouter le numéro si fourni
+      if (numero != null && numero.isNotEmpty) {
+        body['numero'] = numero;
+      }
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(body),
+      );
+
+      setLoading(false);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['status']) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Connexion réussie !'),
+              backgroundColor: blueColor,
+            ),
+          );
+
+          // Stocker les informations utilisateur
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', responseData['token']);
+          await prefs.setBool('isLoggedIn', true);
+          await prefs.setString('name', responseData['name'] ?? name);
+          await prefs.setString('email', responseData['email'] ?? email);
+          await prefs.setString('numero', responseData['numero'] ?? '');
+          await prefs.setString('profileImagePath', responseData['image'] ?? '');
+
+          // Récupérer les achats
+          try {
+            final cartController = Get.find<CartController>();
+            await cartController.fetchAchats();
+          } catch (e) {
+            // CartController non initialisé, ignorer
+          }
+
+          // Envoyer le token FCM au backend
+          try {
+            await FirebaseNotificationService().sendTokenToBackend();
+          } catch (e) {
+            // Ignorer les erreurs FCM
+          }
+
+          // Rediriger vers la page d'accueil
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const BottomNavigation()),
+            (Route<dynamic> route) => false,
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur: ${responseData['message']}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else if (response.statusCode == 422) {
+        // Erreur de validation
+        final responseBody = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(responseBody['message'] ?? 'Erreur de validation'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } else {
+        final responseBody = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(responseBody['message'] ?? 'Erreur de connexion'),
             backgroundColor: Colors.red,
           ),
         );

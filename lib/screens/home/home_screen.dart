@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
@@ -5,47 +7,141 @@ import 'package:flutter/services.dart';
 import 'package:flutter_swiper_view/flutter_swiper_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:supriz/consts/consts.dart';
 import 'package:supriz/screens/notifications/notifications_screen.dart';
+import 'package:supriz/widgets/skeleton_loader.dart';
 import '../../models/publicite.dart';
-import '../historique/historique_screen.dart';
-import '../produits/supriz.dart';
 import '../profil/profil_screen.dart';
 import '../../services/auth_service.dart';
 import 'package:path_provider/path_provider.dart';
-import '../../services/publicite_service.dart'; // Import du service de publicité
+import '../../services/publicite_service.dart';
+import '../../services/message_service.dart';
+import '../../services/notification_service.dart';
+import '../birthdays/birthdays_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(int, String) onCategorySelected;
+  final VoidCallback? onCreateMessagePressed;
+  final VoidCallback? onViewAllPressed;
 
-  const HomeScreen({super.key, required this.onCategorySelected});
+  const HomeScreen({
+    super.key,
+    required this.onCategorySelected,
+    this.onCreateMessagePressed,
+    this.onViewAllPressed,
+  });
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String _userName = 'Invité';
   File? _profileImage;
   late Future<List<Publicite>> _publicitesFuture;
   late PubliciteService _publiciteService;
+  final MessageService _messageService = MessageService();
+  List<MessageItem> _messagesRecents = [];
+  bool _isLoadingMessages = true;
+
+  // Méthode publique pour rafraîchir les messages (appelée depuis l'extérieur)
+  Future<void> refreshMessages() async {
+    setState(() => _isLoadingMessages = true);
+    await _loadMessages();
+    setState(() {
+      _publicitesFuture = _publiciteService.fetchPublicites();
+    });
+  }
+
+  // Rafraîchissement silencieux (sans indicateur de chargement)
+  Future<void> _silentRefresh() async {
+    try {
+      final messages = await _messageService.fetchMessages();
+      if (mounted) {
+        setState(() {
+          _messagesRecents = messages.take(3).toList();
+        });
+      }
+    } catch (e) {
+      // Ignorer les erreurs en mode silencieux
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Rafraîchir silencieusement quand l'app revient au premier plan
+    if (state == AppLifecycleState.resumed) {
+      _silentRefresh();
+    }
+  }
+
+  // Catégories d'événements (icônes par défaut)
+  final Map<String, IconData> _categoryIcons = {
+    'Anniversaire': Icons.cake,
+    'Mariage': Icons.favorite,
+    'Voeux': Icons.card_giftcard,
+    'Vœux': Icons.card_giftcard,
+    'Nouvel an': Icons.celebration,
+    'Noël': Icons.ac_unit,
+  };
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadProfileImage();
     _publiciteService = PubliciteService();
     _publicitesFuture = _publiciteService.fetchPublicites();
     _loadUserName();
+    _loadMessages();
+    _loadNotificationCount();
     profileImageNotifier.addListener(_updateProfileImage);
+    messagesRefreshNotifier.addListener(_silentRefresh);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusScope.of(context).unfocus();
     });
   }
 
+  Future<void> _loadMessages() async {
+    try {
+      final messages = await _messageService.fetchMessages();
+      if (mounted) {
+        setState(() {
+          _messagesRecents = messages.take(3).toList(); // Afficher les 3 derniers
+          _isLoadingMessages = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingMessages = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadNotificationCount() async {
+    try {
+      final notifications = await NotificationService().fetchNotifications();
+      // Mettre en cache les notifications
+      notificationsCache.value = notifications;
+      notificationsLoaded = true;
+      // Mettre à jour le compteur
+      final unreadCount = notifications.where((n) => !n.isRead).length;
+      notificationCountNotifier.value = unreadCount;
+    } catch (e) {
+      // Ignore errors
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     profileImageNotifier.removeListener(_updateProfileImage);
+    messagesRefreshNotifier.removeListener(_silentRefresh);
     super.dispose();
   }
 
@@ -54,14 +150,11 @@ class _HomeScreenState extends State<HomeScreen> {
     String? localImagePath = prefs.getString('localProfileImagePath');
 
     if (localImagePath != null && File(localImagePath).existsSync()) {
-      print('Local Image Path: $localImagePath'); // Ajoutez cette ligne pour le débogage
       profileImageNotifier.value = File(localImagePath);
     } else {
       String? profileImagePath = prefs.getString('profileImagePath');
       if (profileImagePath != null) {
         String fullImagePath = "$domaineapiImage/$profileImagePath";
-        print('Profile Image Path: $fullImagePath'); // Ajoutez cette ligne pour le débogage
-
         File? imageFile = await _downloadImage(fullImagePath);
         if (imageFile != null) {
           await prefs.setString('localProfileImagePath', imageFile.path);
@@ -71,7 +164,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-
   Future<File?> _downloadImage(String url) async {
     try {
       final response = await http.get(Uri.parse(url));
@@ -79,15 +171,13 @@ class _HomeScreenState extends State<HomeScreen> {
         final directory = await getTemporaryDirectory();
         final file = File('${directory.path}/profile_image.jpg');
         await file.writeAsBytes(response.bodyBytes);
-        print('Image downloaded to ${file.path}'); // Ajoutez cette ligne pour le débogage
         return file;
       }
     } catch (e) {
-      print('Error downloading image: $e');
+      debugPrint('Error downloading image: $e');
     }
     return null;
   }
-
 
   void _updateProfileImage() {
     setState(() {
@@ -102,22 +192,70 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  final List<Map<String, dynamic>> gridItems = [
-    {
-      "title": "Hommes",
-      "image": produit1,
-      "index": 0,
-      "subCategory": "T-shirts"
-    },
-    {"title": "Femmes", "image": produit2, "index": 1, "subCategory": "Robes"},
-    {
-      "title": "Enfants",
-      "image": produit3,
-      "index": 2,
-      "subCategory": "T-shirts"
-    },
-    {"title": "Supriz", "image": produit4, "index": 3},
-  ];
+  String _getFirstName() {
+    if (_userName.isEmpty) return '';
+    // Prendre le premier mot (prénom)
+    final firstName = _userName.split(' ').first.trim();
+    if (firstName.isEmpty) return '';
+    // Mettre la première lettre en majuscule
+    return firstName[0].toUpperCase() + firstName.substring(1).toLowerCase();
+  }
+
+  void _showCategoriesBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: whiteColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: greyColor.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            SizedBox(height: 20),
+            ..._categoryIcons.entries.map((entry) => _buildCategoryItem(entry.key, entry.value)).toList(),
+            SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryItem(String label, IconData icon) {
+    return ListTile(
+      leading: Container(
+        width: 45,
+        height: 45,
+        decoration: BoxDecoration(
+          color: blueColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: blueColor, size: 24),
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: blackColor,
+        ),
+      ),
+      trailing: Icon(Icons.chevron_right, color: blueColor),
+      onTap: () {
+        Navigator.pop(context);
+        widget.onCategorySelected(0, label);
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -129,80 +267,497 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: whiteColor,
       appBar: _buildAppBar(context),
-      body: Column(
+      body: RefreshIndicator(
+        onRefresh: refreshMessages,
+        color: blueColor,
+        child: SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Bienvenue
+              Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Center(
+                child: Text(
+                  "Bienvenue ${_getFirstName()}",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: blackColor,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+            // Bannière CTA si pas de messages, sinon carrousel
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: (!_isLoadingMessages && _messagesRecents.isEmpty)
+                  ? Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFF0066B3), // Bleu
+                            Color(0xFF1B8B5A), // Vert
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Créez votre premier message Supriz',
+                            style: TextStyle(
+                              color: whiteColor,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Partagez des moments éphémères avec vos proches',
+                            style: TextStyle(
+                              color: whiteColor.withValues(alpha: 0.9),
+                              fontSize: 14,
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          Material(
+                            color: whiteColor,
+                            borderRadius: BorderRadius.circular(25),
+                            child: InkWell(
+                              onTap: widget.onCreateMessagePressed,
+                              borderRadius: BorderRadius.circular(25),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                child: Text(
+                                  'Créer mon message supriz',
+                                  style: TextStyle(
+                                    color: Color(0xFF0066B3),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : FutureBuilder<List<Publicite>>(
+                      future: _publicitesFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return Shimmer.fromColors(
+                            baseColor: Colors.grey[300]!,
+                            highlightColor: Colors.grey[100]!,
+                            child: Container(
+                              height: 155,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          );
+                        } else if (snapshot.hasError) {
+                          return Container(
+                            height: 180,
+                            child: Center(
+                              child: Text("Erreur de chargement des publicités"),
+                            ),
+                          );
+                        } else {
+                          return ImageSwiper(
+                            publicites: snapshot.data!,
+                            onCategorySelected: widget.onCategorySelected,
+                          );
+                        }
+                      },
+                    ),
+            ),
+            SizedBox(height: 20),
+            // Section Messages récents
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Messages récents",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: blackColor,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: widget.onViewAllPressed,
+                    child: Text(
+                      "Voir tout",
+                      style: TextStyle(
+                        color: blueColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 8),
+            // Liste des messages récents
+            if (_isLoadingMessages)
+              ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                itemCount: 3,
+                itemBuilder: (context, index) {
+                  return _buildMessageCardSkeleton();
+                },
+              )
+            else if (_messagesRecents.isEmpty)
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 50, horizontal: 40),
+                child: Center(
+                  child: Column(
+                    children: [
+                      // Icône personnalisée style paquet
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: Color(0xFFE8E0D5),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Icon(
+                              Icons.inventory_2_outlined,
+                              size: 40,
+                              color: Color(0xFFB8A99A),
+                            ),
+                            Positioned(
+                              right: 12,
+                              bottom: 12,
+                              child: Container(
+                                width: 22,
+                                height: 22,
+                                decoration: BoxDecoration(
+                                  color: Color(0xFFD4C9BC),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.add,
+                                  size: 14,
+                                  color: Color(0xFF9A8B7A),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      Text(
+                        'Aucun message supriz pour le moment,',
+                        style: TextStyle(
+                          color: Color(0xFF9E9E9E),
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'veuillez ajouter un pour voir.',
+                        style: TextStyle(
+                          color: Color(0xFF9E9E9E),
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                itemCount: _messagesRecents.length,
+                itemBuilder: (context, index) {
+                  return _buildMessageCardFromApi(_messagesRecents[index]);
+                },
+              ),
+              SizedBox(height: 100), // Espace pour le bottom navigation
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Obtenir l'URL de l'image du message (mediaUrl ou première image de la liste)
+  String? _getMessageImageUrl(MessageItem message) {
+    // Priorité : mediaUrl, puis première image de la liste
+    if (message.mediaUrl != null && message.mediaUrl!.isNotEmpty) {
+      return message.mediaUrl;
+    }
+    if (message.images != null && message.images!.isNotEmpty) {
+      return message.images!.first;
+    }
+    return null;
+  }
+
+  Widget _buildMessageCardFromApi(MessageItem message) {
+    final bool isActif = message.isActive && !message.isExpired;
+    final bool hasViews = message.viewsCount > 0;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: whiteColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isActif ? blueColor.withValues(alpha: 0.2) : greyColor.withValues(alpha: 0.2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+          // Image - utiliser mediaUrl ou la première image de la liste
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: _getMessageImageUrl(message) != null
+                ? CachedNetworkImage(
+                    imageUrl: _getMessageImageUrl(message)!,
+                    width: 70,
+                    height: 70,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      width: 70,
+                      height: 70,
+                      color: greyColor.withValues(alpha: 0.2),
+                      child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      width: 70,
+                      height: 70,
+                      color: blueColor.withValues(alpha: 0.1),
+                      child: Icon(Icons.card_giftcard, color: blueColor),
+                    ),
+                  )
+                : Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      color: blueColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.card_giftcard, color: blueColor, size: 32),
+                  ),
+          ),
+          SizedBox(width: 12),
+          // Contenu
+          Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Bienvenue ${_userName.isNotEmpty ? _userName[0].toUpperCase() + _userName.substring(1) : ''}",
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold),
+                  message.titre,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: blackColor,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 10),
-                FutureBuilder<List<Publicite>>(
-                  future: _publicitesFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator(
-                        color: blueColor,
-                      );
-                    } else if (snapshot.hasError) {
-                      return const Text("Erreur de chargement des publicités");
-                    } else {
-                      return ImageSwiper(
-                          publicites: snapshot.data!,
-                          onCategorySelected: widget.onCategorySelected);
-                    }
-                  },
+                SizedBox(height: 4),
+                if (message.categorie != null)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: roscColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      message.categorie!,
+                      style: TextStyle(fontSize: 11, color: blackColor),
+                    ),
+                  ),
+                SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.access_time, size: 14, color: greyColor),
+                    SizedBox(width: 4),
+                    Text(
+                      "Expire le ${message.dateExpiration}",
+                      style: TextStyle(fontSize: 12, color: greyColor),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 15),
-                ProductHeader(onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => HistoriquesScreen()),
-                  );
-                }),
-                const SizedBox(height: 5),
               ],
             ),
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 1.0,
-                  crossAxisSpacing: 10.0,
-                  mainAxisSpacing: 10.0,
+          // Statut et Réactions
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isActif ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                itemCount: gridItems.length,
-                itemBuilder: (context, index) {
-                  final item = gridItems[index];
-                  return GridItem(
-                    item: item,
-                    onTap: () {
-                      if (item['index'] == 3) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => SurprizScreen()),
-                        );
-                      } else {
-                        widget.onCategorySelected(
-                            item['index'], item['subCategory'] ?? "");
-                      }
-                    },
-                  );
-                },
+                child: Text(
+                  isActif ? 'Actif' : (message.isExpired ? 'Expiré' : 'Inactif'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isActif ? Colors.green : Colors.orange,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-            ),
+              SizedBox(height: 8),
+              // Afficher les réactions s'il y en a
+              if (message.reactions.isNotEmpty)
+                Wrap(
+                  spacing: 4,
+                  children: message.reactions.entries.map((entry) {
+                    return Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: blueColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(entry.key, style: TextStyle(fontSize: 12)),
+                          SizedBox(width: 2),
+                          Text('${entry.value}', style: TextStyle(fontSize: 10, color: blueColor, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                )
+              else
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      hasViews ? Icons.visibility : Icons.visibility_off_outlined,
+                      size: 14,
+                      color: hasViews ? blueColor : greyColor,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      hasViews ? 'Lu' : 'Non lu',
+                      style: TextStyle(fontSize: 12, color: hasViews ? blueColor : greyColor),
+                    ),
+                  ],
+                ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMessageCardSkeleton() {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: whiteColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: greyColor.withValues(alpha: 0.2)),
+      ),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Row(
+          children: [
+            Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 16,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    height: 20,
+                    width: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    height: 12,
+                    width: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 12),
+            Column(
+              children: [
+                Container(
+                  height: 24,
+                  width: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                SizedBox(height: 8),
+                Container(
+                  height: 14,
+                  width: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -213,46 +768,85 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: whiteColor,
       surfaceTintColor: whiteColor,
       centerTitle: false,
-      title: Row(
-        children: [
-          Image.asset(logo, height: 28),
-          const SizedBox(width: 10),
-        ],
-      ),
+      title: Image.asset(logo, height: 28),
       actions: [
+        // Anniversaires
         IconButton(
-          icon: const Icon(Icons.notifications_none, color: Colors.black),
-          onPressed: () {
-            Navigator.push(
+          icon: Icon(Icons.cake_outlined, color: blackColor, size: 26),
+          onPressed: () async {
+            await Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => NotificationScreen()),
+              MaterialPageRoute(builder: (context) => BirthdaysListScreen()),
+            );
+            // Rafraichir les rappels de notification au retour
+            NotificationService().scheduleAllBirthdayReminders();
+          },
+        ),
+        // Notification avec badge
+        ValueListenableBuilder<int>(
+          valueListenable: notificationCountNotifier,
+          builder: (context, count, child) {
+            return Stack(
+              children: [
+                IconButton(
+                  icon: Icon(Icons.notifications_none, color: blackColor, size: 28),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => NotificationScreen()),
+                    );
+                  },
+                ),
+                if (count > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: blueColor,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: BoxConstraints(minWidth: 18, minHeight: 18),
+                      child: Text(
+                        '$count',
+                        style: TextStyle(
+                          color: whiteColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
             );
           },
         ),
-        IconButton(
-          icon: ValueListenableBuilder<File?>(
-            valueListenable: profileImageNotifier,
-            builder: (context, image, child) {
-              return CircleAvatar(
-                radius: 14,
-                backgroundColor: whiteColor,
-                backgroundImage: image != null ? FileImage(image) : null,
-                child: image == null
-                    ? Icon(
-                  Icons.account_circle,
-                  color: blackColor,
-                  size: 28,
-                )
-                    : null,
+        // Avatar profil
+        Padding(
+          padding: EdgeInsets.only(right: 12),
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProfilScreen()),
               );
             },
+            child: ValueListenableBuilder<File?>(
+              valueListenable: profileImageNotifier,
+              builder: (context, image, child) {
+                return CircleAvatar(
+                  radius: 18,
+                  backgroundColor: greyColor.withOpacity(0.2),
+                  backgroundImage: image != null ? FileImage(image) : null,
+                  child: image == null
+                      ? Icon(Icons.person, color: greyColor, size: 24)
+                      : null,
+                );
+              },
+            ),
           ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => ProfilScreen()),
-            );
-          },
         ),
       ],
     );
@@ -263,113 +857,85 @@ class ImageSwiper extends StatelessWidget {
   final List<Publicite> publicites;
   final Function(int, String) onCategorySelected;
 
-  const ImageSwiper(
-      {super.key, required this.publicites, required this.onCategorySelected});
+  const ImageSwiper({
+    super.key,
+    required this.publicites,
+    required this.onCategorySelected,
+  });
+
+  Future<void> _openLink(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Swiper(
-      layout: SwiperLayout.TINDER,
-      itemHeight: 220.0,
-      itemWidth: double.infinity,
-      itemCount: publicites.length,
-      autoplay: true,
-      autoplayDisableOnInteraction: true,
-      autoplayDelay: 5000,
-      loop: true,
-      onIndexChanged: (index) {},
-      itemBuilder: (BuildContext context, int index) {
-        final publicite = publicites[index];
-        return GestureDetector(
-          onTap: () {
-            onCategorySelected(
-                publicite.typeCategorieId ?? 0, publicite.nameSousCategories ?? "");
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              color: Colors.white,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(15),
-              child: CachedNetworkImage(
-                imageUrl: publicite.pathImage,
-                height: MediaQuery.of(context).size.height * 0.25,
-                fit: BoxFit.fill,
-                placeholder: (context, url) => Center(child: CircularProgressIndicator()),
-                errorWidget: (context, url, error) => Center(child: Icon(Icons.error)),
+    return SizedBox(
+      height: 180,
+      child: Swiper(
+        itemCount: publicites.length,
+        autoplay: true,
+        autoplayDisableOnInteraction: true,
+        autoplayDelay: 5000,
+        loop: true,
+        viewportFraction: 0.9,
+        scale: 0.95,
+        pagination: SwiperPagination(
+          alignment: Alignment.bottomCenter,
+          builder: DotSwiperPaginationBuilder(
+            activeColor: blueColor,
+            color: greyColor.withOpacity(0.3),
+            size: 8,
+            activeSize: 8,
+          ),
+        ),
+        itemBuilder: (BuildContext context, int index) {
+          final publicite = publicites[index];
+          return GestureDetector(
+            onTap: () {
+              // Si un lien est défini, ouvrir le lien
+              if (publicite.lien != null && publicite.lien!.isNotEmpty) {
+                _openLink(publicite.lien!);
+              } else {
+                // Sinon, comportement par défaut (sélection de catégorie)
+                onCategorySelected(
+                  publicite.typeCategorieId ?? 0,
+                  publicite.nameSousCategories ?? "",
+                );
+              }
+            },
+            child: Container(
+              margin: EdgeInsets.only(bottom: 25),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: CachedNetworkImage(
+                  imageUrl: publicite.pathImage,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: greyColor.withOpacity(0.1),
+                    child: Center(child: CircularProgressIndicator(color: blueColor)),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: greyColor.withOpacity(0.1),
+                    child: Center(child: Icon(Icons.error, color: greyColor)),
+                  ),
+                ),
               ),
             ),
-          ),
-        );
-      },
-      physics: const AlwaysScrollableScrollPhysics(),
-    );
-  }
-}
-
-class ProductHeader extends StatelessWidget {
-  final VoidCallback onPressed;
-
-  const ProductHeader({super.key, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text(
-          "Produits",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        TextButton.icon(
-          style: TextButton.styleFrom(
-            backgroundColor: roscColor,
-            shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-          onPressed: onPressed,
-          icon: const Icon(Icons.history, size: 18, color: Colors.black),
-          label: const Text(
-            "Historiques",
-            style: TextStyle(color: Colors.black, fontSize: 14),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class GridItem extends StatelessWidget {
-  final Map<String, dynamic> item;
-  final VoidCallback onTap;
-
-  const GridItem({super.key, required this.item, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              item['image'],
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-            ),
-          ),
-          Positioned(
-            bottom: 8,
-            left: 8,
-            child: Text(
-              item['title'],
-              style: const TextStyle(color: whiteColor, fontSize: 16),
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

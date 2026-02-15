@@ -1,0 +1,2 @@
+/Users/macbookpro/Documents/work/work/Projet/Supriz/supriz-emotions/android/app/.cxx/RelWithDebInfo/5f1m3k1i/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/macbookpro/Documents/work/work/Projet/Supriz/supriz-emotions/android/app/.cxx/RelWithDebInfo/5f1m3k1i/armeabi-v7a/CMakeFiles/rebuild_cache.dir

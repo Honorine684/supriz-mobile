@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supriz/screens/panier/payment_popup_webview.dart';
 import 'package:supriz/widgets/appbar_custom.dart';
-import 'package:velocity_x/velocity_x.dart';
 import '../../consts/consts.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -248,7 +247,7 @@ class _PaymentPageState extends State<PaymentPage> {
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 )
                     : const Text('Lancer le décaissement'),
-              ).box.width(double.infinity).height(50).make(),
+              ),
               const SizedBox(height: 24),
               const Text(
                 '1. Assurez-vous que votre numéro est correct et suffisamment approvisionné avec le montant total.',

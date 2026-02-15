@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import 'package:supriz/screens/panier/payment_screen.dart';
 import 'package:supriz/widgets/appbar_custom.dart';
-import 'package:velocity_x/velocity_x.dart';
 import '../../consts/consts.dart';
 import 'package:supriz/models/product.dart';
 import 'package:flutter/material.dart';
@@ -495,7 +494,7 @@ class _PanierScreenState extends State<PanierScreen> {
                         backgroundColor: vertpan,
                         textColor: whiteColor,
                         text: "Valider",
-                      ).box.width(double.infinity).make(),
+                      ),
                       const SizedBox(height: 16),
                       const Text(
                         "Livraison valable pour les zones de : (Cotonou,Akpakpa,Calavi,Hevié)",

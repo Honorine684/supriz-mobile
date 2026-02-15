@@ -1,4 +1,3 @@
-import 'package:velocity_x/velocity_x.dart';
 import '../../consts/consts.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -65,7 +64,7 @@ class PaymentPopupWebView extends StatelessWidget {
                           horizontal: 16, vertical: 12),
                     ),
                     child: const Text('Terminer'),
-                  ).box.width(double.infinity).make(),
+                  ),
                 ],
               ),
             ),
@@ -151,7 +150,7 @@ class PaymentPopupWebView extends StatelessWidget {
                         horizontal: 16, vertical: 12),
                   ),
                   child: const Text('Compris'),
-                ).box.width(double.infinity).make(),
+                ),
               ],
             ),
           ),

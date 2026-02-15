@@ -7,9 +7,9 @@ import '../../consts/colors.dart';
 import '../../consts/images.dart';
 import '../../consts/strings.dart';
 import '../../widgets/splash_widget.dart';
+import '../../services/notification_service.dart';
 import '../auth/login_screen.dart';
 import '../home/bottom_navigation.dart';
-import '../onboarding/onboarding.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -41,16 +41,9 @@ class _SplashScreenState extends State<SplashScreen> {
       prefs.setBool('isLoggedIn', true);
     }
 
-    // Cas 1 : Première installation de l'application
-    if (isFirstLaunch) {
+    // Cas 1 : Utilisateur non connecté (ou première installation)
+    if (isFirstLaunch || !isLoggedIn) {
       prefs.setBool('isFirstLaunch', false);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => OnboardingScreen()),
-      );
-    }
-    // Cas 2 : Utilisateur non connecté
-    else if (!isLoggedIn) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => LoginScreen()),
@@ -58,6 +51,10 @@ class _SplashScreenState extends State<SplashScreen> {
     }
     // Cas 3 : Utilisateur connecté
     else {
+      // Programmer les rappels d'anniversaire
+      final notificationService = NotificationService();
+      notificationService.scheduleAllBirthdayReminders();
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => BottomNavigation()),

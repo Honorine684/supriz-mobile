@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../consts/consts.dart';
 
 class HistoriqueService {
-  // Remplacez cette constante par l'URL de votre API
   static const String apiUrl = '$domaineapi/historiques';
 
   Future<List<HistoriqueItem>> fetchHistoriques() async {
@@ -22,21 +22,35 @@ class HistoriqueService {
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((item) {
+          // Parser la date ISO et formater en français
+          String formattedDate = '';
+          String formattedTime = '';
+
+          try {
+            final createdAt = item['created_at'];
+            if (createdAt != null) {
+              final dateTime = DateTime.parse(createdAt);
+              formattedDate = DateFormat('dd/MM/yyyy').format(dateTime);
+              formattedTime = DateFormat('HH:mm').format(dateTime);
+            }
+          } catch (_) {
+            formattedDate = '-';
+            formattedTime = '-';
+          }
+
           return HistoriqueItem(
-            text: item['description'],
-            prix: item['prix'].toString(),
-            code: item['code_historiques'],
-            date: item['created_at'].split('T')[0], // Formatage de la date
-            time: item['created_at'].split('T')[1].split('.')[0], // Formatage de l'heure
+            text: item['description']?.toString() ?? 'Sans description',
+            prix: item['prix']?.toString() ?? '0',
+            code: item['code_historiques']?.toString() ?? '-',
+            date: formattedDate,
+            time: formattedTime,
           );
         }).toList();
       } else {
-        // Gérer les erreurs ici
         throw Exception('Échec du chargement des historiques');
       }
     } catch (e) {
-      print('Erreur: $e');
-      // Vous pouvez également afficher un message d'erreur à l'utilisateur
+      print('Erreur historique: $e');
       throw Exception('Erreur lors de la récupération des historiques');
     }
   }

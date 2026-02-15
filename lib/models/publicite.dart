@@ -3,12 +3,14 @@ import '../consts/strings.dart';
 class Publicite {
   final int id;
   final String pathImage;
+  final String? lien;
   final int? typeCategorieId;
   final String? nameSousCategories;
 
   Publicite({
     required this.id,
     required this.pathImage,
+    this.lien,
     this.typeCategorieId,
     this.nameSousCategories,
   });
@@ -29,6 +31,7 @@ class Publicite {
     return Publicite(
       id: json['id'],
       pathImage: _getFullImageUrl(json['pathImage']),
+      lien: json['lien'],
       typeCategorieId: _getTypeCategorieId(json['sous_categorie']?['type_categorie_id']),
       nameSousCategories: json['sous_categorie']?['name_sous_categories'],
     );

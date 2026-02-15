@@ -1,30 +1,28 @@
 // ignore_for_file: prefer_const_constructors
 
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:intl_phone_field/country_picker_dialog.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supriz/consts/consts.dart';
 import 'package:supriz/services/profil_service.dart';
-import 'package:velocity_x/velocity_x.dart';
-import '../../widgets/appbar_custom.dart';
+import 'package:supriz/widgets/appbar_custom.dart';
 
 class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});
 
   @override
-  _ProfilScreenState createState() => _ProfilScreenState();
+  State<ProfilScreen> createState() => _ProfilScreenState();
 }
 
 class _ProfilScreenState extends State<ProfilScreen> {
-  String? storedFirstname;
   String? storedName;
   String? storedNumero;
   String? storedEmail;
-  bool _showingDialog = false;
   File? _profileImage;
 
   @override
@@ -32,7 +30,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
     super.initState();
     _chargeInfo();
     _loadProfileImage();
-    ;
+    profileImageNotifier.addListener(_updateProfileImage);
   }
 
   @override
@@ -46,14 +44,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
     String? localImagePath = prefs.getString('localProfileImagePath');
 
     if (localImagePath != null && File(localImagePath).existsSync()) {
-      print('Local Image Path: $localImagePath'); // Ajoutez cette ligne pour le débogage
       profileImageNotifier.value = File(localImagePath);
     } else {
       String? profileImagePath = prefs.getString('profileImagePath');
       if (profileImagePath != null) {
         String fullImagePath = "$domaineapiImage/$profileImagePath";
-        print('Profile Image Path: $fullImagePath'); // Ajoutez cette ligne pour le débogage
-
         File? imageFile = await _downloadImage(fullImagePath);
         if (imageFile != null) {
           await prefs.setString('localProfileImagePath', imageFile.path);
@@ -63,7 +58,6 @@ class _ProfilScreenState extends State<ProfilScreen> {
     }
   }
 
-
   Future<File?> _downloadImage(String url) async {
     try {
       final response = await http.get(Uri.parse(url));
@@ -71,11 +65,10 @@ class _ProfilScreenState extends State<ProfilScreen> {
         final directory = await getTemporaryDirectory();
         final file = File('${directory.path}/profile_image.jpg');
         await file.writeAsBytes(response.bodyBytes);
-        print('Image downloaded to ${file.path}'); // Ajoutez cette ligne pour le débogage
         return file;
       }
     } catch (e) {
-      print('Error downloading image: $e');
+      debugPrint('Error downloading image: $e');
     }
     return null;
   }
@@ -92,270 +85,465 @@ class _ProfilScreenState extends State<ProfilScreen> {
     profileImageNotifier.value = File(imagePath);
   }
 
-  void _showConfirmationDialog(
-      BuildContext context, String message, Function onConfirm) {
-    setState(() {
-      _showingDialog = true;
-    });
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return WillPopScope(
-          onWillPop: () async => false,
-          child: AlertDialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 20),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text(
-                  message,
-                  style: const TextStyle(fontFamily: 'bold', fontSize: 18),
-                ),
-                const SizedBox(height: 15),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _showingDialog = false;
-                        });
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text(
-                        'Non',
-                        style: TextStyle(fontSize: 16, color: Colors.black),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _showingDialog = false;
-                        });
-                        Navigator.of(context).pop();
-                        onConfirm();
-                      },
-                      child: const Text(
-                        'Oui',
-                        style: TextStyle(fontSize: 16, color: Colors.black),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    ).then((_) {
-      setState(() {
-        _showingDialog = false;
-      });
-    });
-  }
-
-  void _showEditPhotoDialog(BuildContext context) {
-    _showConfirmationDialog(
-      context,
-      "Modifier la photo de profil",
-      () async {
-        final result = await Navigator.of(context).push(
-          MaterialPageRoute(
-              builder: (context) => ChangePhotoScreen(image: _profileImage)),
-        );
-        if (result != null && result is File) {
-          setState(() {
-            _profileImage = result;
-          });
-          _saveProfileImage(result.path);
-        }
-      },
-    );
-  }
-
-  void _showEditUsernameDialog(BuildContext context) {
-    _showConfirmationDialog(
-      context,
-      "Modifier le nom d'utilisateur",
-      () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-              builder: (context) => const ChangeNomPrenomScreen()),
-        );
-      },
-    );
-  }
-
-  void _showEditNumberDialog(BuildContext context) {
-    _showConfirmationDialog(
-      context,
-      "Modifier le numéro de téléphone",
-      () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const ChangeNumberScreen()),
-        );
-      },
-    );
-  }
-
-  void _showEditEmailDialog(BuildContext context) {
-    _showConfirmationDialog(
-      context,
-      "Modifier l'adresse email",
-      () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const ChangeEmailScreen()),
-        );
-      },
-    );
-  }
-
-  void _showEditPasswordDialog(BuildContext context) {
-    _showConfirmationDialog(
-      context,
-      'Modifier le mot de passe',
-      () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const ChangePasswordScreen()),
-        );
-      },
-    );
-  }
-
   Future<void> _chargeInfo() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      storedFirstname = prefs.getString('firstname');
       storedName = prefs.getString('name');
       storedNumero = prefs.getString('numero');
       storedEmail = prefs.getString('email');
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    double profileImageSize = MediaQuery.of(context).size.width * 0.3;
-    double spacing = 20.0;
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: CustomAppBar(title: "Profil"),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
+  void _showEditDialog(BuildContext context, String title, Widget screen) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: whiteColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            title,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                SizedBox(height: spacing),
-                Stack(
-                  children: [
-                    Center(
-                      child: ValueListenableBuilder<File?>(
-                        valueListenable: profileImageNotifier,
-                        builder: (context, image, child) {
-                          return CircleAvatar(
-                            backgroundColor: whiteColor,
-                            radius: profileImageSize / 2,
-                            backgroundImage:
-                                image != null ? FileImage(image) : null,
-                            child: image == null
-                                ? Icon(
-                                    Icons.account_circle,
-                                    color: blackColor,
-                                    size: profileImageSize + 10,
-                                  )
-                                : null,
-                          );
-                        },
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: (MediaQuery.of(context).size.width -
-                                  profileImageSize) /
-                              2 -
-                          15,
-                      child: Container(
-                        height: 30,
-                        width: 30,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                        ),
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: const Icon(
-                            Icons.camera_alt_outlined,
-                            size: 25,
-                            color: Colors.black,
-                          ),
-                          onPressed: () {
-                            _showEditPhotoDialog(context);
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Non', style: TextStyle(color: greyColor)),
                 ),
-                SizedBox(height: spacing / 2),
-                Text(
-                  "${storedName![0].toUpperCase() + storedName!.substring(1)}",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => screen),
+                    ).then((_) => _chargeInfo());
+                  },
+                  child: Text('Oui', style: TextStyle(color: blueColor)),
                 ),
-                SizedBox(height: spacing),
-                _buildInfoRow(
-                    context,
-                    "Nom d'utilisateur",
-                    "${storedName![0].toUpperCase() + storedName!.substring(1)}",
-                    _showEditUsernameDialog),
-                SizedBox(height: spacing / 2),
-                _buildInfoRow(
-                    context, 'Numéro', "$storedNumero", _showEditNumberDialog),
-                SizedBox(height: spacing / 2),
-                _buildInfoRow(
-                    context, 'Email', "$storedEmail", _showEditEmailDialog),
-                SizedBox(height: spacing / 2),
-                _buildInfoRow(context, 'Mot de passe', '********',
-                    _showEditPasswordDialog),
               ],
             ),
-          ),
-          if (_showingDialog)
-            Positioned(
-              child: Container(color: Colors.black.withOpacity(0.2)),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _pickAndSaveImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      final file = File(pickedFile.path);
+      try {
+        final profilService = ProfilService();
+        await profilService.updateProfileImage(file);
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('localProfileImagePath', file.path);
+        profileImageNotifier.value = file;
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Photo de profil mise à jour'),
+              backgroundColor: blueColor,
             ),
-        ],
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: whiteColor,
+      appBar: CustomAppBar(title: 'Profil'),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(height: 30),
+            // Photo de profil
+            Stack(
+                        children: [
+                          ValueListenableBuilder<File?>(
+                            valueListenable: profileImageNotifier,
+                            builder: (context, image, child) {
+                              return Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: whiteColor, width: 4),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      offset: Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: CircleAvatar(
+                                  radius: 55,
+                                  backgroundColor: greyColor.withOpacity(0.2),
+                                  backgroundImage: image != null ? FileImage(image) : null,
+                                  child: image == null
+                                      ? Icon(Icons.person, color: greyColor, size: 60)
+                                      : null,
+                                ),
+                              );
+                            },
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: _pickAndSaveImage,
+                              child: Container(
+                                padding: EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: blueColor,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: whiteColor, width: 2),
+                                ),
+                                child: Icon(
+                                  Icons.camera_alt,
+                                  color: whiteColor,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+                ],
+              ),
+            SizedBox(height: 16),
+            // Nom
+            Text(
+              storedName != null && storedName!.isNotEmpty
+                  ? storedName![0].toUpperCase() + storedName!.substring(1)
+                  : 'Utilisateur',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: blackColor,
+              ),
+            ),
+            SizedBox(height: 20),
+            // Infos cards
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          _buildInfoCard(
+                            icon: Icons.person_outline,
+                            label: "Nom",
+                            value: storedName ?? '',
+                            onTap: () => _showEditDialog(
+                              context,
+                              "Modifier le nom d'utilisateur ?",
+                              ChangeNomScreen(),
+                            ),
+                          ),
+                          SizedBox(height: 12),
+                          _buildInfoCard(
+                            icon: Icons.phone_outlined,
+                            label: "Numéro",
+                            value: storedNumero ?? '',
+                            onTap: () => _showEditDialog(
+                              context,
+                              "Modifier le numéro ?",
+                              ChangeNumberScreen(),
+                            ),
+                          ),
+                          SizedBox(height: 12),
+                          _buildInfoCard(
+                            icon: Icons.email_outlined,
+                            label: "Email",
+                            value: storedEmail ?? '',
+                            onTap: () => _showEditDialog(
+                              context,
+                              "Modifier l'email ?",
+                              ChangeEmailScreen(),
+                            ),
+                          ),
+                          SizedBox(height: 12),
+                          _buildInfoCard(
+                            icon: Icons.lock_outline,
+                            label: "Mot de passe",
+                            value: '••••••••',
+                            onTap: () => _showEditDialog(
+                              context,
+                              "Modifier le mot de passe ?",
+                              ChangePasswordScreen(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+            SizedBox(height: 30),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildInfoRow(BuildContext context, String label, String value,
-      Function(BuildContext) onTap) {
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
-      onTap: () => onTap(context),
+      onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: cloudColor,
-          borderRadius: BorderRadius.circular(8.0),
+          color: whiteColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: greyColor.withOpacity(0.2)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            Container(
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: blueColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: blueColor, size: 22),
             ),
-            const Spacer(),
-            Text(value),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: greyColor,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    value.isNotEmpty ? value : '-',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: blackColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: greyColor),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ========== Écrans de modification ==========
+
+class ChangeNomScreen extends StatefulWidget {
+  const ChangeNomScreen({super.key});
+
+  @override
+  State<ChangeNomScreen> createState() => _ChangeNomScreenState();
+}
+
+class _ChangeNomScreenState extends State<ChangeNomScreen> {
+  final TextEditingController _controller = TextEditingController();
+  final ProfilService _profilService = ProfilService();
+  bool _isLoading = false;
+
+  Future<void> _updateName() async {
+    if (_controller.text.isEmpty) return;
+
+    setState(() => _isLoading = true);
+    try {
+      await _profilService.updateName(_controller.text);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('name', _controller.text);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Nom mis à jour'), backgroundColor: blueColor),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildEditScreen(
+      context: context,
+      title: "Modifier le nom",
+      controller: _controller,
+      hint: "Entrez le nouveau nom",
+      isLoading: _isLoading,
+      onSave: _updateName,
+    );
+  }
+}
+
+class ChangeNumberScreen extends StatefulWidget {
+  const ChangeNumberScreen({super.key});
+
+  @override
+  State<ChangeNumberScreen> createState() => _ChangeNumberScreenState();
+}
+
+class _ChangeNumberScreenState extends State<ChangeNumberScreen> {
+  final ProfilService _profilService = ProfilService();
+  bool _isLoading = false;
+  String _completeNumber = '';
+
+  Future<void> _updateNumber() async {
+    if (_completeNumber.isEmpty) return;
+
+    setState(() => _isLoading = true);
+    try {
+      await _profilService.updateNumber(_completeNumber);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('numero', _completeNumber);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Numéro mis à jour'), backgroundColor: blueColor),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: whiteColor,
+      appBar: CustomAppBar(title: "Modifier le numéro"),
+      body: Padding(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 20),
+            IntlPhoneField(
+              decoration: InputDecoration(
+                hintText: "Numéro de téléphone",
+                hintStyle: TextStyle(color: greyColor),
+                filled: true,
+                fillColor: greyColor.withValues(alpha: 0.1),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: blueColor, width: 2),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: Colors.red, width: 1),
+                ),
+              ),
+              initialCountryCode: 'BJ',
+              languageCode: 'fr',
+              invalidNumberMessage: 'Numéro invalide',
+              disableLengthCheck: true,
+              dropdownIconPosition: IconPosition.trailing,
+              flagsButtonPadding: EdgeInsets.only(left: 10),
+              showDropdownIcon: true,
+              dropdownIcon: Icon(Icons.keyboard_arrow_down, color: greyColor),
+              pickerDialogStyle: PickerDialogStyle(
+                searchFieldInputDecoration: InputDecoration(
+                  hintText: 'Rechercher un pays',
+                  hintStyle: TextStyle(color: greyColor),
+                  filled: true,
+                  fillColor: greyColor.withValues(alpha: 0.1),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: blueColor, width: 2),
+                  ),
+                  prefixIcon: Icon(Icons.search, color: greyColor),
+                ),
+              ),
+              onChanged: (phone) {
+                _completeNumber = phone.completeNumber;
+              },
+              validator: (phone) {
+                if (phone == null || phone.number.isEmpty) {
+                  return 'Ce champ est requis';
+                }
+                // Pour le Bénin: 8 chiffres
+                if (phone.number.length != 8 && phone.number.length != 10) {
+                  return 'Le numéro doit contenir 8 ou 10 chiffres';
+                }
+                return null;
+              },
+            ),
+            SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _updateNumber,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: blueColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ),
+                child: _isLoading
+                    ? CircularProgressIndicator(color: whiteColor)
+                    : Text('Enregistrer', style: TextStyle(color: whiteColor, fontSize: 16)),
+              ),
+            ),
           ],
         ),
       ),
@@ -367,350 +555,50 @@ class ChangeEmailScreen extends StatefulWidget {
   const ChangeEmailScreen({super.key});
 
   @override
-  _ChangeEmailScreenState createState() => _ChangeEmailScreenState();
+  State<ChangeEmailScreen> createState() => _ChangeEmailScreenState();
 }
 
 class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
-  final TextEditingController emailController = TextEditingController();
-  final ProfilService _ProfilService =
-      ProfilService(); // Récupère le prénom depuis les prefs
-  String? storedEmail;
-  void _chargeInfo() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      storedEmail = prefs.getString('email');
-    });
+  final TextEditingController _controller = TextEditingController();
+  final ProfilService _profilService = ProfilService();
+  bool _isLoading = false;
+
+  Future<void> _updateEmail() async {
+    if (_controller.text.isEmpty) return;
+
+    setState(() => _isLoading = true);
+    try {
+      await _profilService.updateEmail(_controller.text);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('email', _controller.text);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Email mis à jour'), backgroundColor: blueColor),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    _chargeInfo();
-    return Scaffold(
-      backgroundColor: whiteColor,
-      appBar: CustomAppBar(title: "Profil"),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Modifier l'email",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12.0, horizontal: 16.0),
-                    decoration: BoxDecoration(
-                      color: cloudColor,
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: Text(
-                      "Email: $storedEmail",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    height: 50,
-                    child: TextField(
-                      controller: emailController,
-                      decoration: const InputDecoration(
-                        hintText: 'Entrer le nouveau email',
-                        hintStyle: TextStyle(fontSize: 16),
-                        border: OutlineInputBorder(),
-                      ),
-                      style: const TextStyle(fontSize: 18),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: 500,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _updateEmail();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: blueColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                      ),
-                      child: const Text('Enregistrer'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-        ],
-      ),
+    return _buildEditScreen(
+      context: context,
+      title: "Modifier l'email",
+      controller: _controller,
+      hint: "Entrez le nouvel email",
+      keyboardType: TextInputType.emailAddress,
+      isLoading: _isLoading,
+      onSave: _updateEmail,
     );
-  }
-
-  void _updateEmail() async {
-    try {
-      final response = await _ProfilService.updateEmail(emailController.text);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Email mis à jour avec succès'),
-        ),
-      );
-
-      Navigator.of(context).pop(true);
-      //Navigator.of(context).push(
-      //MaterialPageRoute(builder: (context) => const ProfilScreen()),
-      //);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur lors de la mise à jour de l\'email: $e'),
-        ),
-      );
-    }
-  }
-}
-
-class ChangeNomPrenomScreen extends StatefulWidget {
-  const ChangeNomPrenomScreen({super.key});
-
-  @override
-  _ChangeNomPrenomScreenState createState() => _ChangeNomPrenomScreenState();
-}
-
-class _ChangeNomPrenomScreenState extends State<ChangeNomPrenomScreen> {
-  final TextEditingController _nomController = TextEditingController();
-  final TextEditingController _prenomController = TextEditingController();
-  final ProfilService _ProfilService = ProfilService();
-  String? storedFirstname;
-  String? storedName; // Récupère le prénom depuis les prefs
-
-  void _chargeInfo() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      storedFirstname = prefs.getString('firstname');
-      storedName =
-          prefs.getString('name'); // Récupère le prénom depuis les prefs
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    _chargeInfo();
-    return Scaffold(
-      backgroundColor: whiteColor,
-      appBar: CustomAppBar(title: "Profil"),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Modifier le nom d'utilisateur",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12.0, horizontal: 16.0),
-                    decoration: BoxDecoration(
-                      color: cloudColor,
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    /*
-                    child:  Text(
-                      "Nom et Prenom : $storedName $storedFirstname",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                     */
-                    child: Text(
-                      "Nom d'utilisateur: $storedName ",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    height: 50,
-                    child: TextField(
-                      controller: _nomController,
-                      decoration: const InputDecoration(
-                        hintText: 'Entrer le nouveau nom',
-                        hintStyle: TextStyle(fontSize: 16),
-                        border: OutlineInputBorder(),
-                      ),
-                      style: const TextStyle(fontSize: 18),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: 500,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _updateName();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: blueColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                      ),
-                      child: const Text('Enregistrer'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  void _updateName() async {
-    try {
-      // final response = await _ProfilService.updateName(_nomController.text, _prenomController.text);
-      final response = await _ProfilService.updateName(_nomController.text);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Nom d'utilisateur mis à jour avec succès"),
-        ),
-      );
-      Navigator.of(context).pop();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur lors de la mise à jour du nom et prénom: $e'),
-        ),
-      );
-    }
-  }
-}
-
-class ChangeNumberScreen extends StatefulWidget {
-  const ChangeNumberScreen({super.key});
-
-  @override
-  _ChangeNumberScreenState createState() => _ChangeNumberScreenState();
-}
-
-class _ChangeNumberScreenState extends State<ChangeNumberScreen> {
-  final TextEditingController phoneController = TextEditingController();
-  final ProfilService _ProfilService = ProfilService();
-  // Récupère le prénom depuis les prefs
-  String? storedNumero; // Récupère le prénom depuis les prefs
-
-  void _chargeInfo() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      storedNumero =
-          prefs.getString('numero'); // Récupère le prénom depuis les prefs
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    _chargeInfo();
-    return Scaffold(
-      backgroundColor: whiteColor,
-      appBar: CustomAppBar(title: "Profil"),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Modifier le numero",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12.0, horizontal: 16.0),
-                    decoration: BoxDecoration(
-                      color: cloudColor,
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: Text(
-                      "Numéro: $storedNumero",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    height: 50,
-                    child: TextField(
-                      controller: phoneController,
-                      decoration: const InputDecoration(
-                        hintText: 'Entrer le nouveau numero',
-                        hintStyle: TextStyle(fontSize: 16),
-                        border: OutlineInputBorder(),
-                      ),
-                      style: const TextStyle(fontSize: 18),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: 500,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _updateNumber();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: blueColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                      ),
-                      child: const Text('Enregistrer'),
-                    ),
-                  )
-                ],
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  void _updateNumber() async {
-    try {
-      final response = await _ProfilService.updateNumber(phoneController.text);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Numéro de téléphone mis à jour avec succès'),
-        ),
-      );
-      Navigator.of(context).pop();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text('Erreur lors de la mise à jour du numéro de téléphone: $e'),
-        ),
-      );
-    }
   }
 }
 
@@ -718,286 +606,205 @@ class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
 
   @override
-  _ChangePasswordScreenState createState() => _ChangePasswordScreenState();
+  State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
 }
 
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
-  final TextEditingController oldPasswordController = TextEditingController();
-  final TextEditingController newPasswordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
-  final ProfilService _ProfilService = ProfilService();
+  final TextEditingController _oldController = TextEditingController();
+  final TextEditingController _newController = TextEditingController();
+  final TextEditingController _confirmController = TextEditingController();
+  final ProfilService _profilService = ProfilService();
+  bool _isLoading = false;
+  bool _obscureOld = true;
+  bool _obscureNew = true;
+  bool _obscureConfirm = true;
 
-  bool _obscureOldPassword = true;
-  bool _obscureNewPassword = true;
-  bool _obscureConfirmPassword = true;
+  Future<void> _updatePassword() async {
+    if (_newController.text != _confirmController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Les mots de passe ne correspondent pas')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await _profilService.updatePassword(_oldController.text, _newController.text);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Mot de passe mis à jour'), backgroundColor: blueColor),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: whiteColor,
-      appBar: CustomAppBar(title: "Profil"),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Modifier le mot de passe",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      appBar: CustomAppBar(title: 'Modifier le mot de passe'),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 20),
+            _buildPasswordField(
+              controller: _oldController,
+              label: "Ancien mot de passe",
+              obscure: _obscureOld,
+              onToggle: () => setState(() => _obscureOld = !_obscureOld),
+            ),
+            SizedBox(height: 16),
+            _buildPasswordField(
+              controller: _newController,
+              label: "Nouveau mot de passe",
+              obscure: _obscureNew,
+              onToggle: () => setState(() => _obscureNew = !_obscureNew),
+            ),
+            SizedBox(height: 16),
+            _buildPasswordField(
+              controller: _confirmController,
+              label: "Confirmer le mot de passe",
+              obscure: _obscureConfirm,
+              onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+            ),
+            SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _updatePassword,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: blueColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
                   ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12.0, horizontal: 16.0),
-                    decoration: BoxDecoration(
-                      color: cloudColor,
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: const Text(
-                      "Mot de passe: *********",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  _buildPasswordField(
-                    controller: oldPasswordController,
-                    hintText: "Entrer l'ancien mot de passe",
-                    obscureText: _obscureOldPassword,
-                    onTap: () {
-                      setState(() {
-                        _obscureOldPassword = !_obscureOldPassword;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  _buildPasswordField(
-                    controller: newPasswordController,
-                    hintText: 'Entrer le nouveau mot de passe',
-                    obscureText: _obscureNewPassword,
-                    onTap: () {
-                      setState(() {
-                        _obscureNewPassword = !_obscureNewPassword;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  _buildPasswordField(
-                    controller: confirmPasswordController,
-                    hintText: 'Confirmer le nouveau mot de passe',
-                    obscureText: _obscureConfirmPassword,
-                    onTap: () {
-                      setState(() {
-                        _obscureConfirmPassword = !_obscureConfirmPassword;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: 500,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _validateAndSubmit();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: blueColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                      ),
-                      child: const Text('Enregistrer'),
-                    ),
-                  )
-                ],
+                ),
+                child: _isLoading
+                    ? CircularProgressIndicator(color: whiteColor)
+                    : Text('Enregistrer', style: TextStyle(color: whiteColor, fontSize: 16)),
               ),
             ),
-          )
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildPasswordField({
     required TextEditingController controller,
-    required String hintText,
-    required bool obscureText,
-    required VoidCallback onTap,
+    required String label,
+    required bool obscure,
+    required VoidCallback onToggle,
   }) {
-    return SizedBox(
-      height: 50,
-      child: TextField(
-        controller: controller,
-        obscureText: obscureText,
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: const TextStyle(fontSize: 16),
-          border: const OutlineInputBorder(),
-          suffixIcon: IconButton(
-            icon: Icon(
-              obscureText ? Icons.visibility_off : Icons.visibility,
-              color: Colors.grey,
-            ),
-            onPressed: onTap,
-          ),
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      decoration: InputDecoration(
+        hintText: label,
+        hintStyle: TextStyle(color: greyColor, fontSize: 14),
+        filled: true,
+        fillColor: greyColor.withValues(alpha: 0.1),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        prefixIcon: Icon(Icons.lock_outline, color: greyColor),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
         ),
-        style: const TextStyle(fontSize: 18),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: blueColor, width: 2),
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, color: greyColor),
+          onPressed: onToggle,
+        ),
       ),
     );
   }
-
-  void _validateAndSubmit() async {
-    if (newPasswordController.text != confirmPasswordController.text) {
-      // Afficher un message d'erreur si les mots de passe ne correspondent pas
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Les mots de passe ne correspondent pas'),
-        ),
-      );
-      return;
-    }
-
-    try {
-      final response = await _ProfilService.updatePassword(
-          oldPasswordController.text, newPasswordController.text);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Mot de passe modifié avec succès'),
-        ),
-      );
-      Navigator.of(context).pop();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur lors de la mise à jour du mot de passe: $e'),
-        ),
-      );
-    }
-  }
 }
 
-class ChangePhotoScreen extends StatefulWidget {
-  final File? image;
-
-  const ChangePhotoScreen({super.key, this.image});
-
-  @override
-  _ChangePhotoScreenState createState() => _ChangePhotoScreenState();
-}
-
-class _ChangePhotoScreenState extends State<ChangePhotoScreen> {
-  File? _image;
-  final ProfilService _ProfilService = ProfilService();
-
-  @override
-  void initState() {
-    super.initState();
-    _image = widget.image;
-  }
-
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
-    }
-  }
-
-  Future<void> _saveImage() async {
-    if (_image != null) {
-      try {
-        final response = await _ProfilService.updateProfileImage(_image!);
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('profileImagePath', _image!.path);
-        await prefs.setString('localProfileImagePath', _image!.path); // Enregistrer le chemin local
-        profileImageNotifier.value = _image;
-        Navigator.of(context).pop(_image);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-            Text('Erreur lors de la mise à jour de la photo de profil: $e'),
-          ),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    double profileImageSize = MediaQuery.of(context).size.width / 2;
-    return Scaffold(
-      backgroundColor: whiteColor,
-      appBar: CustomAppBar(title: "Profil"),
-      body: Stack(
+// Helper pour construire les écrans d'édition simples
+Widget _buildEditScreen({
+  required BuildContext context,
+  required String title,
+  required TextEditingController controller,
+  required String hint,
+  TextInputType keyboardType = TextInputType.text,
+  required bool isLoading,
+  required VoidCallback onSave,
+}) {
+  return Scaffold(
+    backgroundColor: whiteColor,
+    appBar: CustomAppBar(title: title),
+    body: Padding(
+      padding: EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 50),
-                Stack(
-                  children: [
-                    Center(
-                      child: CircleAvatar(
-                        backgroundColor: whiteColor,
-                        radius: 100,
-                        backgroundImage:
-                        _image != null ? FileImage(_image!) : null,
-                        child: _image == null
-                            ? Icon(
-                          Icons.account_circle,
-                          color: blackColor,
-                          size: profileImageSize,
-                        )
-                            : null,
-                      ),
-                    ),
-                  ],
+          SizedBox(height: 20),
+          TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(color: greyColor, fontSize: 14),
+              filled: true,
+              fillColor: greyColor.withValues(alpha: 0.1),
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              prefixIcon: Icon(
+                keyboardType == TextInputType.emailAddress
+                    ? Icons.email_outlined
+                    : Icons.person_outline,
+                color: greyColor,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: blueColor, width: 2),
+              ),
+            ),
+          ),
+          SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: isLoading ? null : onSave,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: blueColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
                 ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _pickImage,
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: blueColor,
-                    backgroundColor: whiteColor,
-                    side: const BorderSide(color: blueColor, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                  ),
-                  child: const Text('Choisir une photo de profil'),
-                ).box.width(500).make(),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _saveImage,
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: blueColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                  ),
-                  child: const Text('Enregistrer'),
-                ).box.width(500).make(),
-              ],
+              ),
+              child: isLoading
+                  ? CircularProgressIndicator(color: whiteColor)
+                  : Text('Enregistrer', style: TextStyle(color: whiteColor, fontSize: 16)),
             ),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
 }

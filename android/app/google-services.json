@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "354215331935",
+    "project_id": "supriz-bb081",
+    "storage_bucket": "supriz-bb081.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:354215331935:android:ba843e1648d877927933ea",
+        "android_client_info": {
+          "package_name": "com.supriz.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWUlo81xpwtJfqU2CPKxkegzWHxmN4TQ4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
