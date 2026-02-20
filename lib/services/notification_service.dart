@@ -80,11 +80,28 @@ class NotificationService {
       List<dynamic> data = json.decode(response.body);
 
       List<NotificationItem> notifications = data.map((item) {
+        // Le format de created_at est maintenant "dd/mm/YYYY HH:mm"
+        String createdAt = item['created_at'] ?? '';
+        String date = '';
+        String time = '';
+
+        if (createdAt.contains(' ')) {
+          // Nouveau format: "20/02/2026 14:30"
+          final parts = createdAt.split(' ');
+          date = parts[0]; // "20/02/2026"
+          time = parts.length > 1 ? parts[1] : ''; // "14:30"
+        } else if (createdAt.contains('T')) {
+          // Ancien format ISO: "2026-02-20T14:30:00.000Z"
+          date = createdAt.split('T')[0];
+          time = createdAt.split('T')[1].split('.')[0];
+        }
+
         return NotificationItem(
           id: item['id'],
+          titre: item['titre'],
           text: item['contenus'] ?? 'No content',
-          date: item['created_at'].split('T')[0],
-          time: item['created_at'].split('T')[1].split('.')[0],
+          date: date,
+          time: time,
           isRead: item['isRead'] ?? false,
         );
       }).toList();
