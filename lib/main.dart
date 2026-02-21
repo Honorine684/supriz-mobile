@@ -43,6 +43,7 @@ void main() async {
   final notificationService = NotificationService();
   await notificationService.initializeNotifications();
   await notificationService.initializeTimezone();
+  await notificationService.requestPermission(); // Demander les permissions
 
   runApp(const Supriz());
 }

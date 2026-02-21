@@ -1,9 +1,13 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'package:flutter/material.dart';
 import '../../consts/consts.dart';
 import '../../services/birthday_service.dart';
 import '../../services/notification_service.dart';
 import '../../widgets/appbar_custom.dart';
 import 'add_birthday_screen.dart';
+
+final NotificationService _notificationService = NotificationService();
 
 class BirthdaysListScreen extends StatefulWidget {
   const BirthdaysListScreen({super.key});
@@ -158,11 +162,144 @@ class _BirthdaysListScreenState extends State<BirthdaysListScreen> {
     }
   }
 
+  void _showTestNotificationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.notifications_active, color: blueColor),
+            SizedBox(width: 8),
+            Text('Tester les notifications'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Choisissez un test pour vérifier que les notifications fonctionnent :',
+              style: TextStyle(fontSize: 14, color: greyColor),
+            ),
+            SizedBox(height: 20),
+            // Test immédiat
+            ListTile(
+              leading: Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.flash_on, color: Colors.green),
+              ),
+              title: Text('Test immédiat'),
+              subtitle: Text('Notification instantanée'),
+              onTap: () async {
+                Navigator.pop(context);
+                await _notificationService.testNotificationNow();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Notification envoyée !'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+            ),
+            Divider(),
+            // Test dans 1 minute
+            ListTile(
+              leading: Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.timer, color: Colors.orange),
+              ),
+              title: Text('Test dans 1 minute'),
+              subtitle: Text('Simule un rappel programmé'),
+              onTap: () async {
+                Navigator.pop(context);
+                await _notificationService.scheduleTestNotification(minutes: 1);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Notification programmée dans 1 minute'),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                }
+              },
+            ),
+            Divider(),
+            // Test dans 5 minutes
+            ListTile(
+              leading: Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: blueColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.schedule, color: blueColor),
+              ),
+              title: Text('Test dans 5 minutes'),
+              subtitle: Text('Vérifie le réveil de l\'app'),
+              onTap: () async {
+                Navigator.pop(context);
+                await _notificationService.scheduleTestNotification(minutes: 5);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Notification programmée dans 5 minutes'),
+                      backgroundColor: blueColor,
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Fermer'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: whiteColor,
-      appBar: CustomAppBar(title: "Anniversaires"),
+      appBar: AppBar(
+        backgroundColor: whiteColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: blackColor),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          "Anniversaires",
+          style: TextStyle(
+            color: blackColor,
+            fontFamily: bold,
+            fontSize: 18,
+          ),
+        ),
+        centerTitle: true,
+        actions: [
+          // Bouton de test des notifications
+          IconButton(
+            icon: Icon(Icons.notifications_active_outlined, color: blueColor),
+            tooltip: 'Tester les notifications',
+            onPressed: _showTestNotificationDialog,
+          ),
+        ],
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null

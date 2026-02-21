@@ -200,6 +200,8 @@ class NotificationService {
   /// Initialiser le timezone pour les notifications programmées
   Future<void> initializeTimezone() async {
     tz_data.initializeTimeZones();
+    // Configurer le timezone local (important pour les notifications programmées)
+    tz.setLocalLocation(tz.getLocation('Africa/Douala')); // Fuseau horaire du Cameroun
   }
 
   /// Demander la permission de notifications (iOS)
@@ -240,8 +242,61 @@ class NotificationService {
       'birthday_reminders',
       'Rappels d\'anniversaire',
       channelDescription: 'Notifications pour les anniversaires de vos amis',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.max,
+      priority: Priority.max,
+      playSound: true,
+      enableVibration: true,
+      enableLights: true,
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.reminder,
+    );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+    );
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    // S'assurer que le timezone local est bien configuré
+    final location = tz.local;
+    final scheduledTZDateTime = tz.TZDateTime(
+      location,
+      scheduledDate.year,
+      scheduledDate.month,
+      scheduledDate.day,
+      scheduledDate.hour,
+      scheduledDate.minute,
+    );
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      1000 + birthdayId, // Offset pour éviter les conflits avec d'autres notifications
+      '🎂 Anniversaire de $friendName !',
+      'Prépare ton message Supriz pour $friendName 🎁',
+      scheduledTZDateTime,
+      notificationDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: 'birthday_$birthdayId',
+    );
+  }
+
+  /// Tester une notification immédiate
+  Future<void> testNotificationNow() async {
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'birthday_reminders',
+      'Rappels d\'anniversaire',
+      channelDescription: 'Notifications pour les anniversaires de vos amis',
+      importance: Importance.max,
+      priority: Priority.max,
+      playSound: true,
+      enableVibration: true,
+      enableLights: true,
     );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
@@ -255,15 +310,66 @@ class NotificationService {
       iOS: iosDetails,
     );
 
+    await flutterLocalNotificationsPlugin.show(
+      9999,
+      '🎂 Test de notification',
+      'Si vous voyez ceci, les notifications fonctionnent !',
+      notificationDetails,
+    );
+  }
+
+  /// Programmer une notification de test dans X minutes
+  Future<void> scheduleTestNotification({required int minutes}) async {
+    await initializeTimezone();
+
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'birthday_reminders',
+      'Rappels d\'anniversaire',
+      channelDescription: 'Notifications pour les anniversaires de vos amis',
+      importance: Importance.max,
+      priority: Priority.max,
+      playSound: true,
+      enableVibration: true,
+      enableLights: true,
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.reminder,
+    );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+    );
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    final now = DateTime.now();
+    final scheduledDate = now.add(Duration(minutes: minutes));
+
+    final location = tz.local;
+    final scheduledTZDateTime = tz.TZDateTime(
+      location,
+      scheduledDate.year,
+      scheduledDate.month,
+      scheduledDate.day,
+      scheduledDate.hour,
+      scheduledDate.minute,
+      scheduledDate.second,
+    );
+
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      1000 + birthdayId, // Offset pour éviter les conflits avec d'autres notifications
-      'Anniversaire de $friendName bientôt !',
-      'Prépare ton message Supriz pour $friendName 🎁',
-      tz.TZDateTime.from(scheduledDate, tz.local),
+      9998,
+      '🎂 Test de rappel d\'anniversaire',
+      'Ceci est un test ! Les rappels fonctionnent correctement.',
+      scheduledTZDateTime,
       notificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      payload: 'birthday_$birthdayId',
+      payload: 'test_notification',
     );
   }
 

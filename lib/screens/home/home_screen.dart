@@ -20,6 +20,7 @@ import '../../services/publicite_service.dart';
 import '../../services/message_service.dart';
 import '../../services/notification_service.dart';
 import '../birthdays/birthdays_list_screen.dart';
+import '../historique/historique_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(int, String) onCategorySelected;
@@ -61,7 +62,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final messages = await _messageService.fetchMessages();
       if (mounted) {
         setState(() {
-          _messagesRecents = messages.take(3).toList();
+          _messagesRecents = messages.take(6).toList();
         });
       }
     } catch (e) {
@@ -75,6 +76,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // Rafraîchir silencieusement quand l'app revient au premier plan
     if (state == AppLifecycleState.resumed) {
       _silentRefresh();
+      _loadNotificationCount(); // Rafraîchir le compteur de notifications
     }
   }
 
@@ -110,7 +112,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final messages = await _messageService.fetchMessages();
       if (mounted) {
         setState(() {
-          _messagesRecents = messages.take(3).toList(); // Afficher les 3 derniers
+          _messagesRecents = messages.take(6).toList(); // Afficher les 6 derniers
           _isLoadingMessages = false;
         });
       }
@@ -267,238 +269,236 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return Scaffold(
       backgroundColor: whiteColor,
       appBar: _buildAppBar(context),
-      body: RefreshIndicator(
-        onRefresh: refreshMessages,
-        color: blueColor,
-        child: SingleChildScrollView(
-          physics: AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Bienvenue
-              Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Center(
-                child: Text(
-                  "Bienvenue ${_getFirstName()}",
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // === PARTIE FIXE (ne scroll pas) ===
+          // Bienvenue
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Center(
+              child: Text(
+                "Bienvenue ${_getFirstName()}",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: blackColor,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 16),
+          // Bannière CTA si pas de messages, sinon carrousel
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: (!_isLoadingMessages && _messagesRecents.isEmpty)
+                ? Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFF0066B3), // Bleu
+                          Color(0xFF1B8B5A), // Vert
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Créez votre premier message Supriz',
+                          style: TextStyle(
+                            color: whiteColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Partagez des moments éphémères avec vos proches',
+                          style: TextStyle(
+                            color: whiteColor.withValues(alpha: 0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        Material(
+                          color: whiteColor,
+                          borderRadius: BorderRadius.circular(25),
+                          child: InkWell(
+                            onTap: widget.onCreateMessagePressed,
+                            borderRadius: BorderRadius.circular(25),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              child: Text(
+                                'Créer mon message supriz',
+                                style: TextStyle(
+                                  color: Color(0xFF0066B3),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : FutureBuilder<List<Publicite>>(
+                    future: _publicitesFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Shimmer.fromColors(
+                          baseColor: Colors.grey[300]!,
+                          highlightColor: Colors.grey[100]!,
+                          child: Container(
+                            height: 155,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        );
+                      } else if (snapshot.hasError) {
+                        return Container(
+                          height: 180,
+                          child: Center(
+                            child: Text("Erreur de chargement des publicités"),
+                          ),
+                        );
+                      } else {
+                        return ImageSwiper(
+                          publicites: snapshot.data!,
+                          onCategorySelected: widget.onCategorySelected,
+                        );
+                      }
+                    },
+                  ),
+          ),
+          SizedBox(height: 20),
+          // Section Messages récents (titre)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Messages récents",
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: blackColor,
                   ),
                 ),
-              ),
-            ),
-            SizedBox(height: 16),
-            // Bannière CTA si pas de messages, sinon carrousel
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: (!_isLoadingMessages && _messagesRecents.isEmpty)
-                  ? Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFF0066B3), // Bleu
-                            Color(0xFF1B8B5A), // Vert
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Créez votre premier message Supriz',
-                            style: TextStyle(
-                              color: whiteColor,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Partagez des moments éphémères avec vos proches',
-                            style: TextStyle(
-                              color: whiteColor.withValues(alpha: 0.9),
-                              fontSize: 14,
-                            ),
-                          ),
-                          SizedBox(height: 16),
-                          Material(
-                            color: whiteColor,
-                            borderRadius: BorderRadius.circular(25),
-                            child: InkWell(
-                              onTap: widget.onCreateMessagePressed,
-                              borderRadius: BorderRadius.circular(25),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                child: Text(
-                                  'Créer mon message supriz',
-                                  style: TextStyle(
-                                    color: Color(0xFF0066B3),
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : FutureBuilder<List<Publicite>>(
-                      future: _publicitesFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return Shimmer.fromColors(
-                            baseColor: Colors.grey[300]!,
-                            highlightColor: Colors.grey[100]!,
-                            child: Container(
-                              height: 155,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                          );
-                        } else if (snapshot.hasError) {
-                          return Container(
-                            height: 180,
-                            child: Center(
-                              child: Text("Erreur de chargement des publicités"),
-                            ),
-                          );
-                        } else {
-                          return ImageSwiper(
-                            publicites: snapshot.data!,
-                            onCategorySelected: widget.onCategorySelected,
-                          );
-                        }
-                      },
-                    ),
-            ),
-            SizedBox(height: 20),
-            // Section Messages récents
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Messages récents",
+                TextButton(
+                  onPressed: widget.onViewAllPressed,
+                  child: Text(
+                    "Voir tout",
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: blackColor,
+                      color: blueColor,
+                      fontWeight: FontWeight.w500,
                     ),
-                  ),
-                  TextButton(
-                    onPressed: widget.onViewAllPressed,
-                    child: Text(
-                      "Voir tout",
-                      style: TextStyle(
-                        color: blueColor,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 8),
-            // Liste des messages récents
-            if (_isLoadingMessages)
-              ListView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                itemCount: 3,
-                itemBuilder: (context, index) {
-                  return _buildMessageCardSkeleton();
-                },
-              )
-            else if (_messagesRecents.isEmpty)
-              Container(
-                padding: EdgeInsets.symmetric(vertical: 50, horizontal: 40),
-                child: Center(
-                  child: Column(
-                    children: [
-                      // Icône personnalisée style paquet
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Color(0xFFE8E0D5),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Icon(
-                              Icons.inventory_2_outlined,
-                              size: 40,
-                              color: Color(0xFFB8A99A),
-                            ),
-                            Positioned(
-                              right: 12,
-                              bottom: 12,
-                              child: Container(
-                                width: 22,
-                                height: 22,
-                                decoration: BoxDecoration(
-                                  color: Color(0xFFD4C9BC),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.add,
-                                  size: 14,
-                                  color: Color(0xFF9A8B7A),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 20),
-                      Text(
-                        'Aucun message supriz pour le moment,',
-                        style: TextStyle(
-                          color: Color(0xFF9E9E9E),
-                          fontSize: 14,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'veuillez ajouter un pour voir.',
-                        style: TextStyle(
-                          color: Color(0xFF9E9E9E),
-                          fontSize: 14,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
                   ),
                 ),
-              )
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _messagesRecents.length,
-                itemBuilder: (context, index) {
-                  return _buildMessageCardFromApi(_messagesRecents[index]);
-                },
-              ),
-              SizedBox(height: 100), // Espace pour le bottom navigation
-            ],
+              ],
+            ),
           ),
-        ),
+          SizedBox(height: 8),
+          // === PARTIE SCROLLABLE (messages récents uniquement) ===
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: refreshMessages,
+              color: blueColor,
+              child: _isLoadingMessages
+                  ? ListView.builder(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: 3,
+                      itemBuilder: (context, index) {
+                        return _buildMessageCardSkeleton();
+                      },
+                    )
+                  : _messagesRecents.isEmpty
+                      ? ListView(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.symmetric(vertical: 50, horizontal: 40),
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    // Icône personnalisée style paquet
+                                    Container(
+                                      width: 80,
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        color: Color(0xFFE8E0D5),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.inventory_2_outlined,
+                                            size: 40,
+                                            color: Color(0xFFB8A99A),
+                                          ),
+                                          Positioned(
+                                            right: 12,
+                                            bottom: 12,
+                                            child: Container(
+                                              width: 22,
+                                              height: 22,
+                                              decoration: BoxDecoration(
+                                                color: Color(0xFFD4C9BC),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Icon(
+                                                Icons.add,
+                                                size: 14,
+                                                color: Color(0xFF9A8B7A),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    SizedBox(height: 20),
+                                    Text(
+                                      'Aucun message supriz pour le moment,',
+                                      style: TextStyle(
+                                        color: Color(0xFF9E9E9E),
+                                        fontSize: 14,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'veuillez ajouter un pour voir.',
+                                      style: TextStyle(
+                                        color: Color(0xFF9E9E9E),
+                                        fontSize: 14,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : ListView.builder(
+                          padding: EdgeInsets.only(left: 16, right: 16, bottom: 100),
+                          itemCount: _messagesRecents.length,
+                          itemBuilder: (context, index) {
+                            return _buildMessageCardFromApi(_messagesRecents[index]);
+                          },
+                        ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -519,24 +519,32 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final bool isActif = message.isActive && !message.isExpired;
     final bool hasViews = message.viewsCount > 0;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: whiteColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isActif ? blueColor.withValues(alpha: 0.2) : greyColor.withValues(alpha: 0.2),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        // Naviguer vers l'historique des messages
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HistoriquesScreen()),
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12),
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: whiteColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isActif ? blueColor.withValues(alpha: 0.2) : greyColor.withValues(alpha: 0.2),
           ),
-        ],
-      ),
-      child: Row(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
         children: [
           // Image - utiliser mediaUrl ou la première image de la liste
           ClipRRect(
@@ -633,7 +641,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
               ),
               SizedBox(height: 8),
-              // Afficher les réactions s'il y en a
+              // Afficher les réactions s'il y en a (sans numérotation)
               if (message.reactions.isNotEmpty)
                 Wrap(
                   spacing: 4,
@@ -644,14 +652,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         color: blueColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(entry.key, style: TextStyle(fontSize: 12)),
-                          SizedBox(width: 2),
-                          Text('${entry.value}', style: TextStyle(fontSize: 10, color: blueColor, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
+                      child: Text(entry.key, style: TextStyle(fontSize: 14)),
                     );
                   }).toList(),
                 )
@@ -674,6 +675,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ],
           ),
         ],
+      ),
       ),
     );
   }

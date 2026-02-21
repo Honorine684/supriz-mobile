@@ -1,9 +1,12 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../consts/consts.dart';
 import '../../widgets/appbar_custom.dart';
 
@@ -22,6 +25,24 @@ class _AssistanceScreenState extends State<AssistanceScreen> {
   void initState() {
     super.initState();
     _faqFuture = fetchFaqs();
+  }
+
+  // Ouvrir le store pour laisser un avis
+  Future<void> _openStore() async {
+    final String appId = Platform.isIOS ? 'id6740044377' : 'com.app.supriz';
+    final Uri url = Platform.isIOS
+        ? Uri.parse('https://apps.apple.com/app/$appId?action=write-review')
+        : Uri.parse('https://play.google.com/store/apps/details?id=$appId');
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  // Partager l'application
+  Future<void> _shareApp() async {
+    const String message = "Découvre Supriz, l'app pour envoyer des messages surprises éphémères à tes proches! Télécharge-la ici: https://suprizs.com";
+    await Share.share(message);
   }
 
   Future<List<dynamic>> fetchFaqs() async {
@@ -135,6 +156,73 @@ class _AssistanceScreenState extends State<AssistanceScreen> {
                       },
                     ),
                     SizedBox(height: 30),
+                    // Boutons Laisser un avis et Partager
+                    Row(
+                      children: [
+                        // Bouton Laisser un avis
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => _openStore(),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.amber.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.star_rate_rounded, color: Colors.amber, size: 32),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Laisser un avis',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: blackColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        // Bouton Partager
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => _shareApp(),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              decoration: BoxDecoration(
+                                color: blueColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: blueColor.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.share_rounded, color: blueColor, size: 32),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Partager',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: blackColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
                     // Contact support
                     Container(
                       padding: EdgeInsets.all(20),
@@ -164,8 +252,11 @@ class _AssistanceScreenState extends State<AssistanceScreen> {
                           ),
                           SizedBox(height: 16),
                           ElevatedButton.icon(
-                            onPressed: () {
-                              // TODO: Ouvrir WhatsApp ou email
+                            onPressed: () async {
+                              final Uri url = Uri.parse('https://suprizs.com/#contact');
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url, mode: LaunchMode.externalApplication);
+                              }
                             },
                             icon: Icon(Icons.chat, size: 18),
                             label: Text('Nous contacter'),
