@@ -259,6 +259,32 @@ class _BirthdaysListScreenState extends State<BirthdaysListScreen> {
                 }
               },
             ),
+            Divider(),
+            // Test serveur (FCM)
+            ListTile(
+              leading: Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.purple.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.cloud, color: Colors.purple),
+              ),
+              title: Text('Test serveur (FCM)'),
+              subtitle: Text('Notification via le serveur'),
+              onTap: () async {
+                Navigator.pop(context);
+                final result = await BirthdayService.testServerNotification();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(result['message'] ?? (result['success'] ? 'Notification envoyée' : 'Échec')),
+                      backgroundColor: result['success'] ? Colors.purple : Colors.red,
+                    ),
+                  );
+                }
+              },
+            ),
           ],
         ),
         actions: [

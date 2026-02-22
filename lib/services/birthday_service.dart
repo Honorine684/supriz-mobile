@@ -348,4 +348,39 @@ class BirthdayService {
       };
     }
   }
+
+  /// Tester la notification serveur (FCM)
+  static Future<Map<String, dynamic>> testServerNotification({int? birthdayId}) async {
+    try {
+      final headers = await _getHeaders();
+      final url = birthdayId != null
+          ? '$domaineapi/birthdays/$birthdayId/test-notification'
+          : '$domaineapi/birthdays/test-notification';
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: headers,
+      );
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200 && data['status'] == true) {
+        return {
+          'success': true,
+          'message': data['message'],
+        };
+      }
+
+      return {
+        'success': false,
+        'message': data['message'] ?? 'Erreur lors de l\'envoi',
+      };
+    } catch (e) {
+      print('Erreur testServerNotification: $e');
+      return {
+        'success': false,
+        'message': 'Erreur de connexion: $e',
+      };
+    }
+  }
 }

@@ -45,6 +45,10 @@ void main() async {
   await notificationService.initializeTimezone();
   await notificationService.requestPermission(); // Demander les permissions
 
+  // Programmer tous les rappels d'anniversaire au démarrage
+  // (au cas où l'app a été fermée ou le téléphone redémarré)
+  notificationService.scheduleAllBirthdayReminders();
+
   runApp(const Supriz());
 }
 

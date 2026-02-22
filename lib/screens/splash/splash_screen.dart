@@ -53,6 +53,7 @@ class _SplashScreenState extends State<SplashScreen> {
     else {
       // Programmer les rappels d'anniversaire
       final notificationService = NotificationService();
+      await notificationService.initializeTimezone();
       notificationService.scheduleAllBirthdayReminders();
 
       Navigator.pushReplacement(

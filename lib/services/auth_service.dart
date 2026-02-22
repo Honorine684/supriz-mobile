@@ -12,6 +12,7 @@ import '../screens/auth/reset_pwd.dart';
 import '../screens/home/bottom_navigation.dart';
 import '../screens/panier/cart_controller.dart';
 import 'firebase_notification_service.dart';
+import 'notification_service.dart';
 
 class AuthService {
 
@@ -193,6 +194,15 @@ class AuthService {
             await FirebaseNotificationService().sendTokenToBackend();
           } catch (e) {
             // Ignorer les erreurs FCM
+          }
+
+          // Programmer les rappels d'anniversaire
+          try {
+            final notificationService = NotificationService();
+            await notificationService.initializeTimezone();
+            notificationService.scheduleAllBirthdayReminders();
+          } catch (e) {
+            // Ignorer les erreurs de notification
           }
 
           // Rediriger vers la page d'accueil
@@ -451,6 +461,15 @@ class AuthService {
             // Ignorer les erreurs FCM
           }
 
+          // Programmer les rappels d'anniversaire
+          try {
+            final notificationService = NotificationService();
+            await notificationService.initializeTimezone();
+            notificationService.scheduleAllBirthdayReminders();
+          } catch (e) {
+            // Ignorer les erreurs de notification
+          }
+
           // Rediriger vers la page d'accueil
           Navigator.pushAndRemoveUntil(
             context,
@@ -540,6 +559,15 @@ class AuthService {
             await FirebaseNotificationService().sendTokenToBackend();
           } catch (e) {
             // Ignorer les erreurs FCM
+          }
+
+          // Programmer les rappels d'anniversaire
+          try {
+            final notificationService = NotificationService();
+            await notificationService.initializeTimezone();
+            notificationService.scheduleAllBirthdayReminders();
+          } catch (e) {
+            // Ignorer les erreurs de notification
           }
 
           // Rediriger vers la page d'accueil
