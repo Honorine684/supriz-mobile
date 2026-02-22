@@ -305,6 +305,9 @@ class MessageService {
         if (data['is_expired'] == true) {
           throw Exception('MESSAGE_EXPIRED');
         }
+        if (data['unique_view_expired'] == true) {
+          throw Exception('UNIQUE_VIEW_EXPIRED');
+        }
         if (data['already_viewed'] == true) {
           throw Exception('ALREADY_VIEWED');
         }

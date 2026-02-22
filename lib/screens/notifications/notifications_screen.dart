@@ -343,7 +343,7 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-class _NotificationCard extends StatelessWidget {
+class _NotificationCard extends StatefulWidget {
   final NotificationItem notification;
   final VoidCallback onTap;
   final VoidCallback onDelete;
@@ -355,11 +355,21 @@ class _NotificationCard extends StatelessWidget {
   });
 
   @override
+  State<_NotificationCard> createState() => _NotificationCardState();
+}
+
+class _NotificationCardState extends State<_NotificationCard> {
+  bool _isExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final notification = widget.notification;
+    final bool hasLongText = notification.text.length > 100;
+
     return Dismissible(
       key: Key('notification_${notification.id}'),
       direction: DismissDirection.endToStart,
-      onDismissed: (_) => onDelete(),
+      onDismissed: (_) => widget.onDelete(),
       background: Container(
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
@@ -375,7 +385,14 @@ class _NotificationCard extends StatelessWidget {
         ),
       ),
       child: GestureDetector(
-        onTap: onTap,
+        onTap: () {
+          widget.onTap();
+          if (hasLongText) {
+            setState(() {
+              _isExpanded = !_isExpanded;
+            });
+          }
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.only(bottom: 8),
@@ -420,21 +437,66 @@ class _NotificationCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      notification.text,
-                      style: TextStyle(
-                        fontSize: 14,
-                        height: 1.4,
-                        color: notification.isRead
-                            ? Colors.grey.shade600
-                            : blackColor,
-                        fontWeight: notification.isRead
-                            ? FontWeight.normal
-                            : FontWeight.w500,
+                    // Titre
+                    if (notification.titre != null && notification.titre!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text(
+                          notification.titre!,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: notification.isRead
+                                ? Colors.grey.shade700
+                                : blackColor,
+                          ),
+                        ),
                       ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
+                    // Description
+                    AnimatedCrossFade(
+                      duration: const Duration(milliseconds: 200),
+                      crossFadeState: _isExpanded
+                          ? CrossFadeState.showSecond
+                          : CrossFadeState.showFirst,
+                      firstChild: Text(
+                        notification.text,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.4,
+                          color: notification.isRead
+                              ? Colors.grey.shade600
+                              : blackColor,
+                          fontWeight: FontWeight.normal,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      secondChild: Text(
+                        notification.text,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.4,
+                          color: notification.isRead
+                              ? Colors.grey.shade600
+                              : blackColor,
+                          fontWeight: FontWeight.normal,
+                        ),
+                      ),
                     ),
+                    // Indicateur flèche pour voir plus/moins
+                    if (hasLongText)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: AnimatedRotation(
+                          duration: const Duration(milliseconds: 200),
+                          turns: _isExpanded ? 0.5 : 0,
+                          child: Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: blueColor,
+                            size: 20,
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -486,6 +548,7 @@ class _NotificationCard extends StatelessWidget {
 
 class NotificationItem {
   final int id;
+  final String? titre;
   final String text;
   final String time;
   final String date;
@@ -495,6 +558,7 @@ class NotificationItem {
 
   NotificationItem({
     required this.id,
+    this.titre,
     required this.text,
     required this.time,
     required this.date,

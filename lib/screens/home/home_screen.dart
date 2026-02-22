@@ -23,13 +23,11 @@ import '../birthdays/birthdays_list_screen.dart';
 import '../historique/historique_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final Function(int, String) onCategorySelected;
   final VoidCallback? onCreateMessagePressed;
   final VoidCallback? onViewAllPressed;
 
   const HomeScreen({
     super.key,
-    required this.onCategorySelected,
     this.onCreateMessagePressed,
     this.onViewAllPressed,
   });
@@ -80,15 +78,6 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  // Catégories d'événements (icônes par défaut)
-  final Map<String, IconData> _categoryIcons = {
-    'Anniversaire': Icons.cake,
-    'Mariage': Icons.favorite,
-    'Voeux': Icons.card_giftcard,
-    'Vœux': Icons.card_giftcard,
-    'Nouvel an': Icons.celebration,
-    'Noël': Icons.ac_unit,
-  };
 
   @override
   void initState() {
@@ -201,62 +190,6 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (firstName.isEmpty) return '';
     // Mettre la première lettre en majuscule
     return firstName[0].toUpperCase() + firstName.substring(1).toLowerCase();
-  }
-
-  void _showCategoriesBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: whiteColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: greyColor.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            SizedBox(height: 20),
-            ..._categoryIcons.entries.map((entry) => _buildCategoryItem(entry.key, entry.value)).toList(),
-            SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryItem(String label, IconData icon) {
-    return ListTile(
-      leading: Container(
-        width: 45,
-        height: 45,
-        decoration: BoxDecoration(
-          color: blueColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(icon, color: blueColor, size: 24),
-      ),
-      title: Text(
-        label,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: blackColor,
-        ),
-      ),
-      trailing: Icon(Icons.chevron_right, color: blueColor),
-      onTap: () {
-        Navigator.pop(context);
-        widget.onCategorySelected(0, label);
-      },
-    );
   }
 
   @override
@@ -373,7 +306,6 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       } else {
                         return ImageSwiper(
                           publicites: snapshot.data!,
-                          onCategorySelected: widget.onCategorySelected,
                         );
                       }
                     },
@@ -857,12 +789,10 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
 class ImageSwiper extends StatelessWidget {
   final List<Publicite> publicites;
-  final Function(int, String) onCategorySelected;
 
   const ImageSwiper({
     super.key,
     required this.publicites,
-    required this.onCategorySelected,
   });
 
   Future<void> _openLink(String url) async {

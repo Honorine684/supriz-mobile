@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:get/get.dart';
 import 'message_service.dart';
 import '../screens/historique/historique_screen.dart';
+import '../screens/notifications/notifications_screen.dart';
 import '../consts/global.dart';
 
 class FirebaseNotificationService {
@@ -66,6 +68,9 @@ class FirebaseNotificationService {
 
         // Configurer les handlers de notifications
         _configureNotificationHandlers();
+
+        // Gérer le cas où l'app est ouverte depuis une notification (app fermée)
+        await _handleInitialMessage();
       } else {
         debugPrint('Notifications refusées');
       }
@@ -113,17 +118,35 @@ class FirebaseNotificationService {
     });
   }
 
+  /// Gérer le cas où l'app est lancée depuis une notification (app était fermée)
+  Future<void> _handleInitialMessage() async {
+    RemoteMessage? initialMessage = await _messaging.getInitialMessage();
+
+    if (initialMessage != null) {
+      debugPrint('App ouverte depuis notification (terminée): ${initialMessage.notification?.title}');
+      // _handleNotificationClick incrémente déjà le compteur
+      _handleNotificationClick(initialMessage);
+    }
+  }
+
   void _handleNotification(RemoteMessage message) async {
     // Afficher une notification locale quand l'app est en foreground
     final notification = message.notification;
     final data = message.data;
 
     if (notification != null) {
+      // Créer un payload JSON avec le type et le slug
+      final payloadData = {
+        'type': data['type'] ?? '',
+        'message_slug': data['message_slug'] ?? '',
+        'notification_id': data['notification_id'] ?? '',
+      };
+
       await _localNotifications.show(
         notification.hashCode,
         notification.title ?? 'Supriz',
         notification.body ?? '',
-        const NotificationDetails(
+        NotificationDetails(
           android: AndroidNotificationDetails(
             'supriz_notifications',
             'Notifications Supriz',
@@ -131,14 +154,19 @@ class FirebaseNotificationService {
             importance: Importance.high,
             priority: Priority.high,
             icon: '@mipmap/ic_launcher',
+            styleInformation: BigTextStyleInformation(
+              notification.body ?? '',
+              contentTitle: notification.title ?? 'Supriz',
+              summaryText: 'Supriz',
+            ),
           ),
-          iOS: DarwinNotificationDetails(
+          iOS: const DarwinNotificationDetails(
             presentAlert: true,
             presentBadge: true,
             presentSound: true,
           ),
         ),
-        payload: data['message_slug'],
+        payload: jsonEncode(payloadData),
       );
 
       // Incrémenter le compteur de notifications non lues
@@ -154,14 +182,23 @@ class FirebaseNotificationService {
       debugPrint('Quelqu\'un a réagi à votre message avec ${data['emoji']}');
       // Déclencher un rafraîchissement silencieux des messages
       messagesRefreshNotifier.value++;
+    } else if (type == 'admin_notification') {
+      debugPrint('Notification admin reçue');
     }
   }
 
-  void _handleNotificationClick(RemoteMessage message) {
+  void _handleNotificationClick(RemoteMessage message) async {
     final data = message.data;
+    final type = data['type'];
     final messageSlug = data['message_slug'];
 
-    if (messageSlug != null && messageSlug.isNotEmpty) {
+    // Incrémenter le compteur car la notification vient du background
+    notificationCountNotifier.value++;
+
+    // Naviguer selon le type de notification
+    if (type == 'admin_notification') {
+      _navigateToNotifications();
+    } else if (messageSlug != null && messageSlug.isNotEmpty) {
       _navigateToMessage(messageSlug);
     }
   }
@@ -172,7 +209,21 @@ class FirebaseNotificationService {
     debugPrint('Notification cliquée avec payload: $payload');
 
     if (payload != null && payload.isNotEmpty) {
-      _navigateToMessage(payload);
+      try {
+        final data = jsonDecode(payload) as Map<String, dynamic>;
+        final type = data['type'] as String?;
+        final messageSlug = data['message_slug'] as String?;
+
+        if (type == 'admin_notification') {
+          _navigateToNotifications();
+        } else if (messageSlug != null && messageSlug.isNotEmpty) {
+          _navigateToMessage(messageSlug);
+        }
+      } catch (e) {
+        // Fallback pour l'ancien format (juste le slug)
+        debugPrint('Erreur parsing payload, fallback: $e');
+        _navigateToMessage(payload);
+      }
     }
   }
 
@@ -185,6 +236,20 @@ class FirebaseNotificationService {
     // Le ViewMessageScreen est pour les visiteurs, pas pour le propriétaire
     Get.to(
       () => const HistoriquesScreen(),
+      transition: Transition.rightToLeft,
+    );
+  }
+
+  /// Naviguer vers l'écran des notifications (pour les notifications admin)
+  void _navigateToNotifications() {
+    debugPrint('Navigation vers les notifications');
+
+    // Invalider le cache pour forcer le rechargement des nouvelles notifications
+    notificationsLoaded = false;
+    notificationsCache.value = [];
+
+    Get.to(
+      () => const NotificationScreen(),
       transition: Transition.rightToLeft,
     );
   }

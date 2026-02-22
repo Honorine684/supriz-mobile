@@ -412,34 +412,20 @@ class _HistoriquesScreenState extends State<HistoriquesScreen> with WidgetsBindi
                     Text('Expire: ${message.dateExpiration}', style: TextStyle(fontSize: 12, color: greyColor)),
                   ],
                 ),
-                // Réactions
+                // Réactions (sans numérotation)
                 if (message.reactions.isNotEmpty) ...[
                   SizedBox(height: 12),
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: 6,
+                    runSpacing: 6,
                     children: message.reactions.entries.map((entry) {
                       return Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: blueColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(entry.key, style: TextStyle(fontSize: 16)),
-                            SizedBox(width: 4),
-                            Text(
-                              '${entry.value}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: blueColor,
-                              ),
-                            ),
-                          ],
-                        ),
+                        child: Text(entry.key, style: TextStyle(fontSize: 18)),
                       );
                     }).toList(),
                   ),

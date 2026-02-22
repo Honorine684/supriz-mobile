@@ -120,6 +120,9 @@ class _ViewMessageScreenState extends State<ViewMessageScreen> {
       if (errorMsg.contains('MESSAGE_EXPIRED')) {
         errorMsg = 'Ce message a expiré';
         errorType = 'expired';
+      } else if (errorMsg.contains('UNIQUE_VIEW_EXPIRED')) {
+        errorMsg = 'Ce message a déjà été consulté';
+        errorType = 'unique_view_expired';
       } else if (errorMsg.contains('ALREADY_VIEWED')) {
         errorMsg = 'Vous avez déjà vu ce message';
         errorType = 'already_viewed';
@@ -236,6 +239,10 @@ class _ViewMessageScreenState extends State<ViewMessageScreen> {
     switch (_errorType) {
       case 'expired':
         icon = Icons.timer_off;
+        iconColor = Colors.orange;
+        break;
+      case 'unique_view_expired':
+        icon = Icons.visibility_off;
         iconColor = Colors.orange;
         break;
       case 'already_viewed':

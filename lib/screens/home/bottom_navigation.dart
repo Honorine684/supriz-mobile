@@ -11,7 +11,6 @@ import '../../services/message_service.dart';
 import '../assistance/assistance_screen.dart';
 import '../historique/historique_screen.dart';
 import '../messages/create_message_flow.dart';
-import '../messages/create_message_screen.dart';
 import '../messages/message_result_screen.dart';
 import '../parametres/parametres_screen.dart';
 import 'home_screen.dart';
@@ -55,7 +54,6 @@ class _BottomNavigationState extends State<BottomNavigation> {
     _pages = [
       HomeScreen(
         key: _homeScreenKey,
-        onCategorySelected: _onCategorySelected,
         onCreateMessagePressed: () => _showCategoriesBottomSheet(),
         onViewAllPressed: () => _goToHistorique(),
       ),
@@ -97,16 +95,6 @@ class _BottomNavigationState extends State<BottomNavigation> {
     setState(() {
       _currentIndex = 1; // Index de l'historique
     });
-  }
-
-  void _onCategorySelected(int categoryIndex, String subCategory) {
-    // Naviguer vers la création de message avec la catégorie sélectionnée
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CreateMessageScreen(category: subCategory),
-      ),
-    );
   }
 
   void _showCategoriesBottomSheet() {

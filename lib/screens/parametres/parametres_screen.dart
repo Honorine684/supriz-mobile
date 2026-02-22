@@ -631,7 +631,7 @@ class PolitiquesScreen extends StatelessWidget {
           children: [
             SectionTitle("Politique de Confidentialité de Supriz"),
             SizedBox(height: 8),
-            NormalText("Dernière mise à jour : ............"),
+            NormalText("Dernière mise à jour : 18 février 2026"),
             SizedBox(height: 16),
             NormalText(
               "Chez Supriz, nous prenons la confidentialité de nos utilisateurs très au sérieux. Cette politique de confidentialité décrit comment nous collectons, utilisons, et protégeons vos informations personnelles lorsque vous utilisez notre application Supriz.",
@@ -691,8 +691,9 @@ class PolitiquesScreen extends StatelessWidget {
               title: "Contact",
               texts: [
                 "Pour toute question concernant cette politique de confidentialité ou pour exercer vos droits, veuillez contacter notre responsable de la protection des données :",
-                "Email: ......................",
-                "Téléphone: .............",
+                "Email: contact@suprizs.com",
+                "Téléphone: +229 01 61 55 66 80",
+                "WhatsApp: +229 61 55 66 80",
               ],
             ),
           ],
