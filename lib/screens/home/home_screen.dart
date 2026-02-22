@@ -897,16 +897,11 @@ class ImageSwiper extends StatelessWidget {
           final publicite = publicites[index];
           return GestureDetector(
             onTap: () {
-              // Si un lien est défini, ouvrir le lien
+              // Ouvrir le lien seulement s'il est défini
               if (publicite.lien != null && publicite.lien!.isNotEmpty) {
                 _openLink(publicite.lien!);
-              } else {
-                // Sinon, comportement par défaut (sélection de catégorie)
-                onCategorySelected(
-                  publicite.typeCategorieId ?? 0,
-                  publicite.nameSousCategories ?? "",
-                );
               }
+              // Sinon ne rien faire
             },
             child: Container(
               margin: EdgeInsets.only(bottom: 25),
