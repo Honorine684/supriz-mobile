@@ -383,4 +383,37 @@ class BirthdayService {
       };
     }
   }
+
+  /// Programmer une notification de test serveur dans X minutes
+  static Future<Map<String, dynamic>> scheduleServerTest({required int minutes}) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse('$domaineapi/birthdays/schedule-test'),
+        headers: headers,
+        body: json.encode({'minutes': minutes}),
+      );
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200 && data['status'] == true) {
+        return {
+          'success': true,
+          'message': data['message'],
+          'scheduled_at': data['scheduled_at'],
+        };
+      }
+
+      return {
+        'success': false,
+        'message': data['message'] ?? 'Erreur lors de la programmation',
+      };
+    } catch (e) {
+      print('Erreur scheduleServerTest: $e');
+      return {
+        'success': false,
+        'message': 'Erreur de connexion: $e',
+      };
+    }
+  }
 }

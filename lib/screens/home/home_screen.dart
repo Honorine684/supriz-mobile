@@ -60,7 +60,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final messages = await _messageService.fetchMessages();
       if (mounted) {
         setState(() {
-          _messagesRecents = messages.take(6).toList();
+          _messagesRecents = messages.take(10).toList();
         });
       }
     } catch (e) {
@@ -101,7 +101,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final messages = await _messageService.fetchMessages();
       if (mounted) {
         setState(() {
-          _messagesRecents = messages.take(6).toList(); // Afficher les 6 derniers
+          _messagesRecents = messages.take(10).toList(); // Afficher les 6 derniers
           _isLoadingMessages = false;
         });
       }

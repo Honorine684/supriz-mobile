@@ -260,7 +260,7 @@ class _BirthdaysListScreenState extends State<BirthdaysListScreen> {
               },
             ),
             Divider(),
-            // Test serveur (FCM)
+            // Test serveur (FCM) immédiat
             ListTile(
               leading: Container(
                 padding: EdgeInsets.all(8),
@@ -270,8 +270,8 @@ class _BirthdaysListScreenState extends State<BirthdaysListScreen> {
                 ),
                 child: Icon(Icons.cloud, color: Colors.purple),
               ),
-              title: Text('Test serveur (FCM)'),
-              subtitle: Text('Notification via le serveur'),
+              title: Text('Test serveur immédiat'),
+              subtitle: Text('Notification FCM instantanée'),
               onTap: () async {
                 Navigator.pop(context);
                 final result = await BirthdayService.testServerNotification();
@@ -280,6 +280,58 @@ class _BirthdaysListScreenState extends State<BirthdaysListScreen> {
                     SnackBar(
                       content: Text(result['message'] ?? (result['success'] ? 'Notification envoyée' : 'Échec')),
                       backgroundColor: result['success'] ? Colors.purple : Colors.red,
+                    ),
+                  );
+                }
+              },
+            ),
+            Divider(),
+            // Test serveur programmé 1 min
+            ListTile(
+              leading: Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.teal.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.cloud_queue, color: Colors.teal),
+              ),
+              title: Text('Test serveur 1 min'),
+              subtitle: Text('Via le scheduler du serveur'),
+              onTap: () async {
+                Navigator.pop(context);
+                final result = await BirthdayService.scheduleServerTest(minutes: 1);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(result['message'] ?? (result['success'] ? 'Programmé' : 'Échec')),
+                      backgroundColor: result['success'] ? Colors.teal : Colors.red,
+                    ),
+                  );
+                }
+              },
+            ),
+            Divider(),
+            // Test serveur programmé 5 min
+            ListTile(
+              leading: Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.indigo.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.cloud_done, color: Colors.indigo),
+              ),
+              title: Text('Test serveur 5 min'),
+              subtitle: Text('Simule un vrai rappel'),
+              onTap: () async {
+                Navigator.pop(context);
+                final result = await BirthdayService.scheduleServerTest(minutes: 5);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(result['message'] ?? (result['success'] ? 'Programmé' : 'Échec')),
+                      backgroundColor: result['success'] ? Colors.indigo : Colors.red,
                     ),
                   );
                 }

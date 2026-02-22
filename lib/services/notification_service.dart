@@ -277,7 +277,7 @@ class NotificationService {
     await flutterLocalNotificationsPlugin.zonedSchedule(
       1000 + birthdayId, // Offset pour éviter les conflits avec d'autres notifications
       '🎂 Anniversaire de $friendName !',
-      'Prépare ton message Supriz pour $friendName 🎁',
+      '$friendName soufflera une bougie de plus dans quelques instants. Sois prêt 😎',
       scheduledTZDateTime,
       notificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -312,8 +312,8 @@ class NotificationService {
 
     await flutterLocalNotificationsPlugin.show(
       9999,
-      '🎂 Test de notification',
-      'Si vous voyez ceci, les notifications fonctionnent !',
+      '🎂 Anniversaire de Test Ami !',
+      'Test Ami soufflera une bougie de plus dans quelques instants. Sois prêt 😎',
       notificationDetails,
     );
   }
@@ -363,8 +363,8 @@ class NotificationService {
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       9998,
-      '🎂 Test de rappel d\'anniversaire',
-      'Ceci est un test ! Les rappels fonctionnent correctement.',
+      '🎂 Anniversaire de Test Ami !',
+      'Test Ami soufflera une bougie de plus dans quelques instants. Sois prêt 😎',
       scheduledTZDateTime,
       notificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
