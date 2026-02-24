@@ -8,6 +8,7 @@ import '../../consts/images.dart';
 import '../../consts/strings.dart';
 import '../../widgets/splash_widget.dart';
 import '../../services/notification_service.dart';
+import '../../services/firebase_notification_service.dart';
 import '../auth/login_screen.dart';
 import '../home/bottom_navigation.dart';
 
@@ -51,6 +52,13 @@ class _SplashScreenState extends State<SplashScreen> {
     }
     // Cas 3 : Utilisateur connecté
     else {
+      // Rafraîchir le token FCM à chaque ouverture de l'app
+      try {
+        await FirebaseNotificationService().sendTokenToBackend();
+      } catch (e) {
+        // Ignorer les erreurs FCM
+      }
+
       // Programmer les rappels d'anniversaire
       final notificationService = NotificationService();
       await notificationService.initializeTimezone();

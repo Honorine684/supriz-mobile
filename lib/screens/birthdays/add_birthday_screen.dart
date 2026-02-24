@@ -21,7 +21,7 @@ class _AddBirthdayScreenState extends State<AddBirthdayScreen> {
 
   int? _selectedDay;
   int? _selectedMonth;
-  int _reminderMinutes = 30; // 30 min avant 00h par défaut
+  int _reminderMinutes = 60; // 1h avant 00h par défaut
 
   bool _isLoading = false;
   bool get _isEditing => widget.birthday != null;
