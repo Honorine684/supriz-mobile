@@ -331,7 +331,7 @@ class AuthService {
   Future<void> deleteUser(BuildContext context, Function setLoading) async {
     setLoading(true); // Début du chargement
 
-    final url = Uri.parse('$domaineapi/dropUserInTable');
+    final url = Uri.parse('$domaineapi/deletecompte');
 
     try {
       final response = await http.post(
@@ -340,9 +340,6 @@ class AuthService {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${await _getToken()}',
         },
-        body: jsonEncode({
-          'id': await _getUserId(),
-        }),
       );
 
       setLoading(false); // Fin du chargement
@@ -616,11 +613,6 @@ class AuthService {
   Future<String> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token') ?? '';
-  }
-
-  Future<String> _getUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('userId') ?? '';
   }
 
   // Méthode pour envoyer l'OTP à l'email de l'utilisateur
