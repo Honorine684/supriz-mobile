@@ -41,7 +41,10 @@ class _AssistanceScreenState extends State<AssistanceScreen> {
 
   // Partager l'application
   Future<void> _shareApp() async {
-    const String message = "Découvre Supriz, l'app pour envoyer des messages surprises éphémères à tes proches! Télécharge-la ici: https://suprizs.com";
+    final String storeLink = Platform.isIOS
+        ? 'https://apps.apple.com/app/id6740044377'
+        : 'https://play.google.com/store/apps/details?id=com.app.supriz';
+    final String message = "Découvre Supriz, l'app pour envoyer des messages surprises éphémères à tes proches! Télécharge-la ici: $storeLink";
     await Share.share(message);
   }
 
