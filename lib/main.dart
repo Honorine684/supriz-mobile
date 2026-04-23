@@ -4,30 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:supriz/screens/panier/cart_controller.dart';
-import 'package:supriz/screens/panier/cart_provider.dart';
 import 'package:supriz/screens/splash/splash_screen.dart';
-import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import 'connection_checker.dart';
 import 'consts/strings.dart';
 import 'consts/styles.dart';
 import 'services/notification_service.dart';
 import 'services/firebase_notification_service.dart';
-
-/*
-void main() => runApp(
-  DevicePreview(
-    enabled: !kReleaseMode,
-    builder: (context) => Supriz(),
-  ),
-);
-
- */
+import 'widgets/toast_notification.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Get.lazyPut<CartController>(() => CartController());
 
   // Initialiser Firebase
   await Firebase.initializeApp();
@@ -42,12 +29,6 @@ void main() async {
   // Initialiser les notifications locales
   final notificationService = NotificationService();
   await notificationService.initializeNotifications();
-  await notificationService.initializeTimezone();
-  await notificationService.requestPermission(); // Demander les permissions
-
-  // Programmer tous les rappels d'anniversaire au démarrage
-  // (au cas où l'app a été fermée ou le téléphone redémarré)
-  notificationService.scheduleAllBirthdayReminders();
 
   runApp(const Supriz());
 }
@@ -68,10 +49,8 @@ class _SuprizState extends State<Supriz> {
     connectionChecker = ConnectionChecker();
     connectionChecker.startConnectivityMonitor(
         onConnectionChanged: (hasInternet) {
-      if (!hasInternet) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Connexion Internet perdue')),
-        );
+      if (!hasInternet && mounted) {
+        ToastNotification.error(context, 'Connexion Internet perdue. Vérifiez votre réseau.');
       }
     });
   }
@@ -84,11 +63,7 @@ class _SuprizState extends State<Supriz> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (ctx) => CartProvider()),
-      ],
-      child: GetMaterialApp(
+    return GetMaterialApp(
         debugShowCheckedModeBanner: false,
         title: appname,
         theme: ThemeData(
@@ -109,7 +84,6 @@ class _SuprizState extends State<Supriz> {
         locale: const Locale('fr', 'FR'),
         home: SplashScreen(),
         navigatorKey: connectionChecker.navigatorKey,
-      ),
-    );
+      );
   }
 }

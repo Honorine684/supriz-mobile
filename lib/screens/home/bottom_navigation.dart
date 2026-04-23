@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../consts/consts.dart';
 import '../../services/message_service.dart';
+import '../../widgets/toast_notification.dart';
 import '../assistance/assistance_screen.dart';
 import '../historique/historique_screen.dart';
 import '../messages/create_message_flow.dart';
@@ -270,12 +271,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
     if (_lastPressedAt == null ||
         DateTime.now().difference(_lastPressedAt!) > Duration(seconds: 2)) {
       _lastPressedAt = DateTime.now();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Appuyez à nouveau pour quitter"),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      ToastNotification.info(context, "Appuyez à nouveau pour quitter");
     } else {
       Navigator.of(context).pop();
     }
@@ -429,7 +425,7 @@ class _CreateMessageBottomSheetState extends State<CreateMessageBottomSheet> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
-  String _selectedExpiration = '24h'; // 24h ou 48h
+  String _selectedExpiration = '24h'; // 24h, 48h ou 72h
   String? _selectedMusic;
   int? _selectedMusicIndex;
   final List<File?> _selectedImages = [null, null, null]; // 3 slots d'images
@@ -438,12 +434,12 @@ class _CreateMessageBottomSheetState extends State<CreateMessageBottomSheet> {
 
   // Liste des musiques avec leurs infos
   final List<Map<String, String>> _musicOptions = [
-    {'title': 'Joyeuse anniversaire', 'artist': 'SIDIKI DIABATE'},
-    {'title': 'Joyeuse anniversaire', 'artist': 'SIDIKI DIABATE'},
-    {'title': 'Joyeuse anniversaire', 'artist': 'SIDIKI DIABATE'},
-    {'title': 'Joyeuse anniversaire', 'artist': 'SIDIKI DIABATE'},
-    {'title': 'Joyeuse anniversaire', 'artist': 'SIDIKI DIABATE'},
-    {'title': 'Joyeuse anniversaire', 'artist': 'SIDIKI DIABATE'},
+    {'title': 'Joyeux anniversaire', 'artist': 'SIDIKI DIABATE'},
+    {'title': 'Joyeux anniversaire', 'artist': 'SIDIKI DIABATE'},
+    {'title': 'Joyeux anniversaire', 'artist': 'SIDIKI DIABATE'},
+    {'title': 'Joyeux anniversaire', 'artist': 'SIDIKI DIABATE'},
+    {'title': 'Joyeux anniversaire', 'artist': 'SIDIKI DIABATE'},
+    {'title': 'Joyeux anniversaire', 'artist': 'SIDIKI DIABATE'},
   ];
 
   Future<void> _pickImage(int index) async {
@@ -501,12 +497,7 @@ class _CreateMessageBottomSheetState extends State<CreateMessageBottomSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur lors de la sélection de l\'image'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ToastNotification.error(context, 'Impossible de sélectionner l\'image. Veuillez réessayer.');
       }
     }
   }
@@ -542,13 +533,7 @@ class _CreateMessageBottomSheetState extends State<CreateMessageBottomSheet> {
 
   void _improveMessageWithAI() {
     // TODO: Implémenter l'amélioration du message par IA
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Amélioration du message par IA...'),
-        backgroundColor: blueColor,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    ToastNotification.info(context, 'Amélioration du message par IA...');
   }
 
   void _setExpiration(String value) {
@@ -559,14 +544,7 @@ class _CreateMessageBottomSheetState extends State<CreateMessageBottomSheet> {
 
   void _onSubmit() {
     if (_titleController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Veuillez entrer un titre'),
-          backgroundColor: blueColor,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+      ToastNotification.error(context, 'Veuillez entrer un titre');
       return;
     }
 
@@ -975,6 +953,29 @@ class _CreateMessageBottomSheetState extends State<CreateMessageBottomSheet> {
               ),
             ),
           ),
+          SizedBox(width: 8),
+          // Bouton 72h
+          GestureDetector(
+            onTap: () => _setExpiration('72h'),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: _selectedExpiration == '72h' ? blueColor : whiteColor,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: _selectedExpiration == '72h' ? blueColor : Color(0xFFE0E0E0),
+                ),
+              ),
+              child: Text(
+                '72h',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: _selectedExpiration == '72h' ? whiteColor : blackColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
           SizedBox(width: 10),
           Container(
             padding: EdgeInsets.all(4),
@@ -1024,7 +1025,7 @@ class _CreateMessageBottomSheetState extends State<CreateMessageBottomSheet> {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          "Sélectionnez une musique pour amplifier l'émotion a fais passé.",
+                          "Sélectionnez une musique pour amplifier l'émotion à faire passer.",
                           style: TextStyle(
                             fontSize: 12,
                             color: greyColor,
@@ -1360,13 +1361,7 @@ class _MessagePreviewBottomSheetState extends State<MessagePreviewBottomSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur lors de la création du message: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        ToastNotification.error(context, 'Impossible de créer le message. Veuillez réessayer.');
       }
     } finally {
       if (mounted) {
@@ -1524,7 +1519,7 @@ class _MessagePreviewBottomSheetState extends State<MessagePreviewBottomSheet> {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Sélectionnez un arrière plan pour donné plus vie a votre message.',
+                          'Sélectionnez un arrière-plan pour donner plus de vie à votre message.',
                           style: TextStyle(
                             fontSize: 12,
                             color: greyColor,

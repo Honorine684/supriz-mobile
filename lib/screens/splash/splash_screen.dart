@@ -7,7 +7,6 @@ import '../../consts/colors.dart';
 import '../../consts/images.dart';
 import '../../consts/strings.dart';
 import '../../widgets/splash_widget.dart';
-import '../../services/notification_service.dart';
 import '../../services/firebase_notification_service.dart';
 import '../auth/login_screen.dart';
 import '../home/bottom_navigation.dart';
@@ -59,11 +58,6 @@ class _SplashScreenState extends State<SplashScreen> {
         // Ignorer les erreurs FCM
       }
 
-      // Programmer les rappels d'anniversaire
-      final notificationService = NotificationService();
-      await notificationService.initializeTimezone();
-      notificationService.scheduleAllBirthdayReminders();
-
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => BottomNavigation()),
@@ -99,31 +93,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 2),
-                // Version de l'application
-                const Text(
-                  appversion,
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
               ],
-            ),
-            // Copyright en bas
-            Positioned(
-              bottom: 16,
-              left: 0,
-              right: 0,
-              child: Column(
-                children: const [
-                  Text(
-                    name_version,
-                    style: TextStyle(
-                      fontFamily: 'bold',
-                      fontSize: 15,
-                      color: greyColor,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ],
         ),

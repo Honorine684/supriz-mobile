@@ -8,6 +8,7 @@ import 'package:supriz/consts/consts.dart';
 import 'package:supriz/services/message_service.dart';
 import 'package:supriz/widgets/appbar_custom.dart';
 import 'package:supriz/widgets/skeleton_loader.dart';
+import 'package:supriz/widgets/toast_notification.dart';
 
 class HistoriquesScreen extends StatefulWidget {
   const HistoriquesScreen({super.key});
@@ -105,15 +106,11 @@ class _HistoriquesScreenState extends State<HistoriquesScreen> with WidgetsBindi
         await _messageService.deleteMessage(message.id);
         _loadMessages();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Message supprimé'), backgroundColor: Colors.green),
-          );
+          ToastNotification.success(context, 'Message supprimé');
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur lors de la suppression'), backgroundColor: Colors.red),
-          );
+          ToastNotification.error(context, 'Impossible de supprimer le message. Veuillez réessayer.');
         }
       }
     }
@@ -125,9 +122,7 @@ class _HistoriquesScreenState extends State<HistoriquesScreen> with WidgetsBindi
       _loadMessages();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors du changement de statut'), backgroundColor: Colors.red),
-        );
+        ToastNotification.error(context, 'Impossible de modifier le statut. Veuillez réessayer.');
       }
     }
   }
@@ -141,9 +136,7 @@ class _HistoriquesScreenState extends State<HistoriquesScreen> with WidgetsBindi
 
   void _copyLink(MessageItem message) {
     Clipboard.setData(ClipboardData(text: message.shareUrl));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Lien copié !'), backgroundColor: blueColor),
-    );
+    ToastNotification.success(context, 'Lien copié !');
   }
 
   @override

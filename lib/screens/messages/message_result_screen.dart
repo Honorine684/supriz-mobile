@@ -8,6 +8,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../consts/consts.dart';
 import '../../widgets/appbar_custom.dart';
+import '../../widgets/toast_notification.dart';
 
 class MessageResultScreen extends StatefulWidget {
   final Map<String, dynamic> messageData;
@@ -69,12 +70,7 @@ class _MessageResultScreenState extends State<MessageResultScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur lors du partage'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ToastNotification.error(context, 'Impossible de partager. Veuillez réessayer.');
       }
     }
   }
@@ -113,24 +109,13 @@ class _MessageResultScreenState extends State<MessageResultScreen> {
           );
 
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('QR Code prêt à partager !'),
-                backgroundColor: Colors.green,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
+            ToastNotification.success(context, 'QR Code prêt à partager !');
           }
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur lors du téléchargement'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ToastNotification.error(context, 'Impossible de générer le QR Code. Veuillez réessayer.');
       }
     }
   }

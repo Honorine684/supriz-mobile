@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:supriz/screens/auth/login_screen.dart';
 import '../../consts/colors.dart';
-import '../../widgets/appbar_custom.dart';
+import '../../consts/images.dart';
 import '../../widgets/our_button.dart';
 import '../../services/auth_service.dart';
 
@@ -47,132 +47,182 @@ class _ResetPwdState extends State<ResetPwd> {
       return;
     }
 
-    // Si tout est valide
     await AuthService().resetPassword(widget.email, newPassword, context, setLoading);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: whiteColor,
-      appBar: CustomAppBar(title: 'Nouveau mot de passe'),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const Text(
-                "Nouveau mot de passe",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                "Entrez un nouveau mot de passe et confirmez-le.",
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 20),
-        
-              // Champ pour le nouveau mot de passe
-              TextField(
-                controller: _passwordController,
-                obscureText: !_isPasswordVisible,
-                decoration: InputDecoration(
-                  hintText: 'Nouveau mot de passe',
-                  hintStyle: TextStyle(color: greyColor, fontSize: 14),
-                  filled: true,
-                  fillColor: greyColor.withValues(alpha: 0.1),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  prefixIcon: Icon(Icons.lock_outline, color: greyColor),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: blueColor, width: 2),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                      color: greyColor,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(authBg),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Bouton retour
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      icon: Icon(Icons.arrow_back, color: whiteColor),
+                      onPressed: () => Navigator.pop(context),
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _isPasswordVisible = !_isPasswordVisible;
-                      });
-                    },
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-
-              // Champ pour la confirmation du mot de passe
-              TextField(
-                controller: _confirmPasswordController,
-                obscureText: !_isConfirmPasswordVisible,
-                decoration: InputDecoration(
-                  hintText: 'Confirmer le mot de passe',
-                  hintStyle: TextStyle(color: greyColor, fontSize: 14),
-                  filled: true,
-                  fillColor: greyColor.withValues(alpha: 0.1),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  prefixIcon: Icon(Icons.lock_outline, color: greyColor),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: blueColor, width: 2),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _isConfirmPasswordVisible
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      color: greyColor,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-                      });
-                    },
-                  ),
-                ),
-              ),
-        
-              const SizedBox(height: 20),
-        
-              // Affichage du message d'erreur
-              if (_errorMessage.isNotEmpty)
+                SizedBox(height: 20),
+                // Logo
+                Image.asset(icAppLogo, height: 100),
+                SizedBox(height: 16),
+                // Titre
                 Text(
-                  _errorMessage,
-                  style: const TextStyle(color: Colors.red),
+                  'Nouveau mot de passe',
+                  style: TextStyle(
+                    color: whiteColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-        
-              const SizedBox(height: 5),
-        
-              // Bouton de validation
-              ourButton(
-                text: 'Valider',
-                backgroundColor: blueColor,
-                textColor: whiteColor,
-                onPressed: _resetPassword,
-                isLoading: _isLoading, // Passer l'état de chargement
-              ),
-            ],
+                SizedBox(height: 30),
+                // Card
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: whiteColor,
+                    borderRadius: BorderRadius.circular(32),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Créer un mot de passe',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: blackColor,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Entrez votre nouveau mot de passe',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: greyColor,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 24),
+                        // Champ pour le nouveau mot de passe
+                        TextField(
+                          controller: _passwordController,
+                          obscureText: !_isPasswordVisible,
+                          decoration: InputDecoration(
+                            hintText: 'Nouveau mot de passe',
+                            hintStyle: TextStyle(color: greyColor, fontSize: 14),
+                            filled: true,
+                            fillColor: greyColor.withValues(alpha: 0.1),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            prefixIcon: Icon(Icons.lock_outline, color: greyColor),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(color: blueColor, width: 2),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                color: greyColor,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        // Champ pour la confirmation du mot de passe
+                        TextField(
+                          controller: _confirmPasswordController,
+                          obscureText: !_isConfirmPasswordVisible,
+                          decoration: InputDecoration(
+                            hintText: 'Confirmer le mot de passe',
+                            hintStyle: TextStyle(color: greyColor, fontSize: 14),
+                            filled: true,
+                            fillColor: greyColor.withValues(alpha: 0.1),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            prefixIcon: Icon(Icons.lock_outline, color: greyColor),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(color: blueColor, width: 2),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isConfirmPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: greyColor,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        if (_errorMessage.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: Text(
+                              _errorMessage,
+                              style: TextStyle(color: Colors.red, fontSize: 14),
+                            ),
+                          ),
+                        SizedBox(height: 24),
+                        ourButton(
+                          text: 'Valider',
+                          onPressed: _resetPassword,
+                          isLoading: _isLoading,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),

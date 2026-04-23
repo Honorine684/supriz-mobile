@@ -2,6 +2,7 @@
 
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:intl_phone_field/country_picker_dialog.dart';
@@ -11,6 +12,7 @@ import 'package:supriz/screens/auth/mdp_oublie_screen.dart';
 import 'package:supriz/screens/auth/register_screen.dart';
 import '../../consts/consts.dart';
 import '../../widgets/our_button.dart';
+import '../../widgets/toast_notification.dart';
 import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -47,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    serverClientId: '852250813157-korlpa310j3d4bv4sd2rc5lt2laqdaoi.apps.googleusercontent.com',
+    serverClientId: '354215331935-kjcejhimh30l8h6ml708d7dl7nmkr896.apps.googleusercontent.com',
   );
 
   @override
@@ -133,9 +135,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       setState(() {
         _isGoogleLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur de connexion Google: $error')),
-      );
+      if (mounted) {
+        ToastNotification.error(context, 'Connexion Google impossible. Veuillez réessayer.');
+      }
     }
   }
 
@@ -180,9 +182,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       setState(() {
         _isAppleLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur de connexion Apple: $error')),
-      );
+      if (mounted) {
+        ToastNotification.error(context, 'Connexion Apple impossible. Veuillez réessayer.');
+      }
     }
   }
 
@@ -705,6 +707,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           languageCode: 'fr',
           invalidNumberMessage: 'Numéro invalide',
           disableLengthCheck: true,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(10),
+          ],
           dropdownIconPosition: IconPosition.trailing,
           flagsButtonPadding: EdgeInsets.only(left: 10),
           showDropdownIcon: true,
@@ -735,9 +741,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             if (phone == null || phone.number.isEmpty) {
               return 'Ce champ est requis';
             }
-            // Pour le Bénin: 8 chiffres
-            if (phone.number.length != 8 && phone.number.length != 10) {
-              return 'Le numéro doit contenir 8 ou 10 chiffres';
+            if (phone.number.length != 10) {
+              return 'Le numéro doit contenir 10 chiffres';
             }
             return null;
           },

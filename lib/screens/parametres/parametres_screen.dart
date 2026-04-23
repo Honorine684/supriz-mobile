@@ -8,6 +8,7 @@ import 'package:supriz/screens/profil/profil_screen.dart';
 import '../../services/auth_service.dart';
 import '../../services/cache_service.dart';
 import '../../widgets/appbar_custom.dart';
+import '../../widgets/toast_notification.dart';
 
 class ParametresScreen extends StatefulWidget {
   const ParametresScreen({super.key});
@@ -213,15 +214,11 @@ class _ParametresScreenState extends State<ParametresScreen> {
                         setState(() => _isLoading = false);
                         await _loadCacheSize();
 
-                        scaffoldMessenger.showSnackBar(
-                          SnackBar(
-                            content: Text(success
-                                ? 'Cache vidé avec succès'
-                                : 'Erreur lors du vidage du cache'),
-                            backgroundColor: success ? Colors.green : Colors.red,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
+                        if (success) {
+                          ToastNotification.success(context, 'Cache vidé avec succès');
+                        } else {
+                          ToastNotification.error(context, 'Impossible de vider le cache. Veuillez réessayer.');
+                        }
                       }
                     },
                     icon: Icon(Icons.delete_sweep, color: whiteColor),
@@ -252,15 +249,11 @@ class _ParametresScreenState extends State<ParametresScreen> {
                         setState(() => _isLoading = false);
                         await _loadCacheSize();
 
-                        scaffoldMessenger.showSnackBar(
-                          SnackBar(
-                            content: Text(success
-                                ? 'Cache images vidé'
-                                : 'Erreur lors du vidage'),
-                            backgroundColor: success ? Colors.green : Colors.red,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
+                        if (success) {
+                          ToastNotification.success(context, 'Cache images vidé');
+                        } else {
+                          ToastNotification.error(context, 'Impossible de vider le cache images. Veuillez réessayer.');
+                        }
                       }
                     },
                     icon: Icon(Icons.image_outlined, color: blueColor),
@@ -489,7 +482,7 @@ class CondicUtilisation extends StatelessWidget {
             ),
             SizedBox(height: 20),
             Text(
-              "Dernière mise à jour: 31 janvier 2026",
+              "Dernière mise à jour : 28 février 2026",
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 20),
@@ -518,11 +511,10 @@ class CondicUtilisation extends StatelessWidget {
             ),
             SizedBox(height: 4),
             Text("• Envoyer et partager des messages émotionnels.", style: TextStyle(fontSize: 14)),
-            Text("• Programmer des événements (comme des anniversaires) et recevoir des rappels.", style: TextStyle(fontSize: 14)),
-            Text("• Créer des liens personnalisés avec une durée de validité ajustable (Lecture unique, 24h, 48h, 72h, 7 jours).", style: TextStyle(fontSize: 14)),
+            Text("• Créer des liens de partage avec une durée de validité ajustable (24h, 48h ou 72h).", style: TextStyle(fontSize: 14)),
             Text("• Ajouter des images et choisir des arrière-plans variés.", style: TextStyle(fontSize: 14)),
-            Text("• Permettre aux destinataires de réagir avec des smileys.", style: TextStyle(fontSize: 14)),
-            Text("• Améliorer les messages grâce à une analyse par intelligence artificielle.", style: TextStyle(fontSize: 14)),
+            Text("• Ajouter de la musique à vos messages.", style: TextStyle(fontSize: 14)),
+            Text("• Permettre aux destinataires de réagir avec des emojis.", style: TextStyle(fontSize: 14)),
             SizedBox(height: 8),
             Text(
               "L'utilisateur s'engage à utiliser Supriz de manière respectueuse et à ne pas diffuser de contenus illégaux, offensants ou contraires aux bonnes mœurs.",
@@ -537,25 +529,14 @@ class CondicUtilisation extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text("• La création d'un compte nécessite une adresse email et un numéro de téléphone.", style: TextStyle(fontSize: 14)),
-            Text("• Ces informations sont utilisées uniquement pour l'accès aux fonctionnalités avancées et restent confidentielles.", style: TextStyle(fontSize: 14)),
+            Text("• Ces informations sont utilisées uniquement pour l'accès aux fonctionnalités et restent confidentielles.", style: TextStyle(fontSize: 14)),
             Text("• L'utilisateur est responsable de la confidentialité de ses identifiants et de l'exactitude des informations fournies.", style: TextStyle(fontSize: 14)),
             Text("• Supriz se réserve le droit de suspendre ou supprimer un compte en cas d'utilisation abusive ou frauduleuse.", style: TextStyle(fontSize: 14)),
             SizedBox(height: 16),
 
-            // 4. Version payante
+            // 4. Propriété intellectuelle
             Text(
-              "4. Version payante (si applicable)",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text("• Certaines fonctionnalités futures de Supriz pourraient être proposées sous forme payante.", style: TextStyle(fontSize: 14)),
-            Text("• Les modalités de paiement, remboursement et sécurité des transactions seront précisées au moment de leur mise en place.", style: TextStyle(fontSize: 14)),
-            Text("• L'utilisateur sera informé avant toute activation de services payants.", style: TextStyle(fontSize: 14)),
-            SizedBox(height: 16),
-
-            // 5. Propriété intellectuelle
-            Text(
-              "5. Propriété intellectuelle",
+              "4. Propriété intellectuelle",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
@@ -564,9 +545,9 @@ class CondicUtilisation extends StatelessWidget {
             Text("• Toute reproduction ou utilisation non autorisée des éléments de Supriz est interdite.", style: TextStyle(fontSize: 14)),
             SizedBox(height: 16),
 
-            // 6. Modification
+            // 5. Modification
             Text(
-              "6. Modification des conditions",
+              "5. Modification des conditions",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
@@ -576,9 +557,9 @@ class CondicUtilisation extends StatelessWidget {
             ),
             SizedBox(height: 16),
 
-            // 7. Loi applicable
+            // 6. Loi applicable
             Text(
-              "7. Loi applicable et juridiction",
+              "6. Loi applicable et juridiction",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
@@ -588,16 +569,20 @@ class CondicUtilisation extends StatelessWidget {
             ),
             SizedBox(height: 16),
 
-            // 8. Contact
+            // 7. Contact
             Text(
-              "8. Contact",
+              "7. Contact",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
             Text(
-              "Pour toute question ou demande relative aux présentes conditions, vous pouvez contacter l'assistance directement via l'application Supriz.",
+              "Pour toute question ou demande relative aux présentes conditions, vous pouvez nous contacter :",
               style: TextStyle(fontSize: 14),
             ),
+            SizedBox(height: 4),
+            Text("• Email : contact@suprizs.com", style: TextStyle(fontSize: 14)),
+            Text("• Téléphone : +229 01 61 55 66 80", style: TextStyle(fontSize: 14)),
+            Text("• WhatsApp : +229 61 55 66 80", style: TextStyle(fontSize: 14)),
             SizedBox(height: 30),
           ],
         ),
@@ -631,45 +616,45 @@ class PolitiquesScreen extends StatelessWidget {
           children: [
             SectionTitle("Politique de Confidentialité de Supriz"),
             SizedBox(height: 8),
-            NormalText("Dernière mise à jour : 18 février 2026"),
+            NormalText("Dernière mise à jour : 28 février 2026"),
             SizedBox(height: 16),
             NormalText(
-              "Chez Supriz, nous prenons la confidentialité de nos utilisateurs très au sérieux. Cette politique de confidentialité décrit comment nous collectons, utilisons, et protégeons vos informations personnelles lorsque vous utilisez notre application Supriz.",
+              "Chez Supriz, nous croyons que les émotions méritent d'être partagées en toute simplicité et en toute confidentialité. Cette politique de confidentialité a pour but de vous expliquer comment nous traitons les données liées à votre utilisation de notre service.",
             ),
             SizedBox(height: 16),
             Section(
               title: "Collecte des Informations",
               texts: [
                 "Nous collectons les informations suivantes lorsque vous utilisez notre application :",
-                "- Informations personnelles: Nom, Adresse e-mail, Numéro de téléphone, Adresse de livraison.",
-                "- Informations de paiement",
-                "- Informations sur les produits que vous consultez, ajoutez à votre panier ou achetez.",
-                "- Messages Supriz: les souhaits et messages que vous envoyez pour créer des cartes de vœux.",
+                "- Informations de compte : Nom, Adresse e-mail, Numéro de téléphone.",
+                "- Messages Supriz : les messages que vous créez et partagez.",
+                "- Données techniques : informations sur votre appareil pour assurer le bon fonctionnement de l'application.",
               ],
             ),
             Section(
               title: "Utilisation des Informations",
               texts: [
                 "Les informations collectées sont utilisées pour :",
-                "- Traiter et livrer vos commandes.",
+                "- Permettre la création et le partage de vos messages Supriz.",
                 "- Personnaliser votre expérience sur l'application.",
-                "- Créer des cartes de vœux personnalisées.",
-                "- Améliorer nos services et produits.",
-                "- Communiquer avec vous concernant vos commandes et nos offres.",
+                "- Assurer la stabilité, la sécurité et la performance du service.",
+                "- Vous envoyer des notifications importantes concernant votre compte.",
               ],
             ),
             Section(
               title: "Partage des Informations",
               texts: [
-                "Nous ne partageons vos informations personnelles avec des tiers que dans les cas suivants :",
-                "- Avec des prestataires de services tiers pour traiter les paiements et livrer les commandes.",
+                "Nous ne vendons, ne louons, ni ne partageons vos données avec des tiers. Vos informations personnelles ne sont partagées que dans les cas suivants :",
                 "- Si requis par la loi ou pour protéger nos droits légaux.",
               ],
             ),
             Section(
               title: "Sécurité des Informations",
               texts: [
-                "Nous mettons en place des mesures de sécurité pour protéger vos informations personnelles contre l'accès non autorisé, la divulgation, l'altération ou la destruction.",
+                "Nous mettons en œuvre des mesures de sécurité pour protéger vos informations :",
+                "- Connexion sécurisée via HTTPS.",
+                "- Stockage sécurisé des données.",
+                "- Accès restreint aux serveurs.",
               ],
             ),
             Section(
@@ -678,11 +663,11 @@ class PolitiquesScreen extends StatelessWidget {
                 "Vous avez le droit de :",
                 "- Accéder à vos informations personnelles.",
                 "- Demander la correction de vos informations personnelles.",
-                "- Demander la suppression de vos informations personnelles.",
+                "- Demander la suppression de votre compte et de vos données.",
               ],
             ),
             Section(
-              title: "Modifications de la Politique de Confidentialité",
+              title: "Modifications de la Politique",
               texts: [
                 "Nous pouvons mettre à jour cette politique de confidentialité de temps en temps. Nous vous informerons de tout changement en publiant la nouvelle politique sur notre application.",
               ],
@@ -691,9 +676,9 @@ class PolitiquesScreen extends StatelessWidget {
               title: "Contact",
               texts: [
                 "Pour toute question concernant cette politique de confidentialité ou pour exercer vos droits, veuillez contacter notre responsable de la protection des données :",
-                "Email: contact@suprizs.com",
-                "Téléphone: +229 01 61 55 66 80",
-                "WhatsApp: +229 61 55 66 80",
+                "Email : contact@suprizs.com",
+                "Téléphone : +229 01 61 55 66 80",
+                "WhatsApp : +229 61 55 66 80",
               ],
             ),
           ],

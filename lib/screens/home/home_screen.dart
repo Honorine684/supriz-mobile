@@ -19,7 +19,6 @@ import 'package:path_provider/path_provider.dart';
 import '../../services/publicite_service.dart';
 import '../../services/message_service.dart';
 import '../../services/notification_service.dart';
-import '../birthdays/birthdays_list_screen.dart';
 import '../historique/historique_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -268,7 +267,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             child: Container(
                               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                               child: Text(
-                                'Créer mon message supriz',
+                                'Créer mon message Supriz',
                                 style: TextStyle(
                                   color: Color(0xFF0066B3),
                                   fontWeight: FontWeight.w600,
@@ -285,14 +284,16 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     future: _publicitesFuture,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Shimmer.fromColors(
-                          baseColor: Colors.grey[300]!,
-                          highlightColor: Colors.grey[100]!,
-                          child: Container(
-                            height: 155,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
+                        return AspectRatio(
+                          aspectRatio: 16 / 7,
+                          child: Shimmer.fromColors(
+                            baseColor: Colors.grey[300]!,
+                            highlightColor: Colors.grey[100]!,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                             ),
                           ),
                         );
@@ -399,7 +400,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                     ),
                                     SizedBox(height: 20),
                                     Text(
-                                      'Aucun message supriz pour le moment,',
+                                      'Aucun message Supriz pour le moment.',
                                       style: TextStyle(
                                         color: Color(0xFF9E9E9E),
                                         fontSize: 14,
@@ -408,7 +409,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                     ),
                                     SizedBox(height: 4),
                                     Text(
-                                      'veuillez ajouter un pour voir.',
+                                      'Appuyez sur + pour créer votre premier message.',
                                       style: TextStyle(
                                         color: Color(0xFF9E9E9E),
                                         fontSize: 14,
@@ -704,18 +705,6 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       centerTitle: false,
       title: Image.asset(logo, height: 28),
       actions: [
-        // Anniversaires
-        IconButton(
-          icon: Icon(Icons.cake_outlined, color: blackColor, size: 26),
-          onPressed: () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => BirthdaysListScreen()),
-            );
-            // Rafraichir les rappels de notification au retour
-            NotificationService().scheduleAllBirthdayReminders();
-          },
-        ),
         // Notification avec badge
         ValueListenableBuilder<int>(
           valueListenable: notificationCountNotifier,
@@ -804,8 +793,8 @@ class ImageSwiper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 180,
+    return AspectRatio(
+      aspectRatio: 1080 / 612, // Ratio 1080x612 pour toutes les tailles d'écran
       child: Swiper(
         itemCount: publicites.length,
         autoplay: true,
@@ -836,7 +825,8 @@ class ImageSwiper extends StatelessWidget {
             child: Container(
               margin: EdgeInsets.only(bottom: 25),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
@@ -846,7 +836,7 @@ class ImageSwiper extends StatelessWidget {
                 ],
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 child: CachedNetworkImage(
                   imageUrl: publicite.pathImage,
                   fit: BoxFit.cover,

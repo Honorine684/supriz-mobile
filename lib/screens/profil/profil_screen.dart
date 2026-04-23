@@ -2,6 +2,7 @@
 
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:intl_phone_field/country_picker_dialog.dart';
@@ -11,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supriz/consts/consts.dart';
 import 'package:supriz/services/profil_service.dart';
 import 'package:supriz/widgets/appbar_custom.dart';
+import 'package:supriz/widgets/toast_notification.dart';
 
 class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});
@@ -147,18 +149,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
         await prefs.setString('localProfileImagePath', file.path);
         profileImageNotifier.value = file;
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Photo de profil mise à jour'),
-              backgroundColor: blueColor,
-            ),
-          );
+          ToastNotification.success(context, 'Photo de profil mise à jour');
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur: $e')),
-          );
+          ToastNotification.error(context, 'Une erreur est survenue. Veuillez réessayer.');
         }
       }
     }
@@ -382,16 +377,12 @@ class _ChangeNomScreenState extends State<ChangeNomScreen> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('name', _controller.text);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Nom mis à jour'), backgroundColor: blueColor),
-        );
+        ToastNotification.success(context, 'Nom mis à jour');
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
-        );
+        ToastNotification.error(context, 'Une erreur est survenue. Veuillez réessayer.');
       }
     } finally {
       setState(() => _isLoading = false);
@@ -432,16 +423,12 @@ class _ChangeNumberScreenState extends State<ChangeNumberScreen> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('numero', _completeNumber);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Numéro mis à jour'), backgroundColor: blueColor),
-        );
+        ToastNotification.success(context, 'Numéro mis à jour');
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
-        );
+        ToastNotification.error(context, 'Une erreur est survenue. Veuillez réessayer.');
       }
     } finally {
       setState(() => _isLoading = false);
@@ -487,6 +474,10 @@ class _ChangeNumberScreenState extends State<ChangeNumberScreen> {
               languageCode: 'fr',
               invalidNumberMessage: 'Numéro invalide',
               disableLengthCheck: true,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10),
+              ],
               dropdownIconPosition: IconPosition.trailing,
               flagsButtonPadding: EdgeInsets.only(left: 10),
               showDropdownIcon: true,
@@ -520,9 +511,8 @@ class _ChangeNumberScreenState extends State<ChangeNumberScreen> {
                 if (phone == null || phone.number.isEmpty) {
                   return 'Ce champ est requis';
                 }
-                // Pour le Bénin: 8 chiffres
-                if (phone.number.length != 8 && phone.number.length != 10) {
-                  return 'Le numéro doit contenir 8 ou 10 chiffres';
+                if (phone.number.length != 10) {
+                  return 'Le numéro doit contenir 10 chiffres';
                 }
                 return null;
               },
@@ -572,16 +562,12 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('email', _controller.text);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Email mis à jour'), backgroundColor: blueColor),
-        );
+        ToastNotification.success(context, 'Email mis à jour');
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
-        );
+        ToastNotification.error(context, 'Une erreur est survenue. Veuillez réessayer.');
       }
     } finally {
       setState(() => _isLoading = false);
@@ -621,9 +607,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   Future<void> _updatePassword() async {
     if (_newController.text != _confirmController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Les mots de passe ne correspondent pas')),
-      );
+      ToastNotification.error(context, 'Les mots de passe ne correspondent pas');
       return;
     }
 
@@ -631,16 +615,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     try {
       await _profilService.updatePassword(_oldController.text, _newController.text);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Mot de passe mis à jour'), backgroundColor: blueColor),
-        );
+        ToastNotification.success(context, 'Mot de passe mis à jour');
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
-        );
+        ToastNotification.error(context, 'Une erreur est survenue. Veuillez réessayer.');
       }
     } finally {
       setState(() => _isLoading = false);

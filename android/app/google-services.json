@@ -12,7 +12,20 @@
           "package_name": "com.supriz.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "354215331935-u92rvc5lptrl8p3tedvn7psb5rjjhlrb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.supriz.app",
+            "certificate_hash": "7fe939d621987f3a18249552f410a59cc109d3d4"
+          }
+        },
+        {
+          "client_id": "354215331935-kjcejhimh30l8h6ml708d7dl7nmkr896.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDWUlo81xpwtJfqU2CPKxkegzWHxmN4TQ4"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "354215331935-kjcejhimh30l8h6ml708d7dl7nmkr896.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

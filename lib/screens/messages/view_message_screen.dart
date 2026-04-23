@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../consts/consts.dart';
 import '../../services/message_service.dart';
+import '../../widgets/toast_notification.dart';
 
 class ViewMessageScreen extends StatefulWidget {
   final String slug;
@@ -193,9 +194,7 @@ class _ViewMessageScreenState extends State<ViewMessageScreen> {
         setState(() {
           _reactions = oldReactions;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors de la réaction'), backgroundColor: Colors.red),
-        );
+        ToastNotification.error(context, 'Impossible d\'envoyer la réaction. Veuillez réessayer.');
       }
     }
   }
@@ -522,8 +521,11 @@ class _ViewMessageScreenState extends State<ViewMessageScreen> {
                     borderRadius: BorderRadius.circular(16),
                     child: CachedNetworkImage(
                       imageUrl: images[index],
+                      height: 280,
+                      width: double.infinity,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
+                        height: 280,
                         color: Colors.grey.withValues(alpha: 0.3),
                         child: Center(child: CircularProgressIndicator(color: whiteColor)),
                       ),

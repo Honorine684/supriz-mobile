@@ -72,7 +72,7 @@ class ConnectionChecker {
                   ),
                   SizedBox(height: 15),
                   Text(
-                    'Oups! veuillez activer votre connexion.',
+                    'Oups ! Veuillez activer votre connexion.',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey[600],

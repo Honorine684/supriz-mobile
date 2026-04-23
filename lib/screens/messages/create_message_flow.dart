@@ -14,6 +14,7 @@ import '../../consts/consts.dart';
 import '../../services/message_service.dart';
 import '../../services/audio_cache_service.dart';
 import '../../widgets/skeleton_loader.dart';
+import '../../widgets/toast_notification.dart';
 
 class CreateMessageFlow extends StatefulWidget {
   final String category;
@@ -66,6 +67,9 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
 
   // Aperçu cadeau
   bool _previewGiftOpened = false;
+
+  // Index du carousel d'images dans l'aperçu
+  int _previewImageIndex = 0;
 
   // Backgrounds depuis l'API
   List<ArrierePlanItem> _arrierePlans = [];
@@ -259,9 +263,7 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
           _loadingMusiqueId = null;
           _playingMusiqueId = null;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Impossible de lire la musique'), backgroundColor: Colors.red),
-        );
+        ToastNotification.error(context, 'Impossible de lire la musique');
       }
     }
   }
@@ -270,13 +272,17 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
     if (_currentStep == 0) {
       // Validation avant d'aller à la musique
       if (_titleController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Veuillez entrer un titre'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        ToastNotification.error(context, 'Veuillez entrer un titre');
+        return;
+      }
+      if (_messageController.text.isEmpty) {
+        ToastNotification.error(context, 'Veuillez entrer une description');
+        return;
+      }
+      // Vérifier qu'au moins une image est sélectionnée
+      final hasImage = _selectedImages.any((img) => img != null);
+      if (!hasImage) {
+        ToastNotification.error(context, 'Veuillez ajouter au moins une image');
         return;
       }
     }
@@ -345,13 +351,7 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        ToastNotification.error(context, 'Une erreur est survenue. Veuillez réessayer.');
       }
     } finally {
       if (mounted) {
@@ -410,9 +410,7 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
     } catch (e) {
       print('Error picking/cropping image: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
-        );
+        ToastNotification.error(context, 'Une erreur est survenue. Veuillez réessayer.');
       }
     }
   }
@@ -558,10 +556,28 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
         SizedBox(height: 24),
 
         // Titre
-        Text('Titre *', style: TextStyle(fontWeight: FontWeight.w500, color: blackColor)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Titre *', style: TextStyle(fontWeight: FontWeight.w500, color: blackColor)),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _titleController,
+              builder: (context, value, child) {
+                final length = value.text.length;
+                final color = length > 54 ? Colors.red : (length > 42 ? Colors.orange : greyColor);
+                return Text(
+                  '$length/60',
+                  style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w500),
+                );
+              },
+            ),
+          ],
+        ),
         SizedBox(height: 8),
         TextField(
           controller: _titleController,
+          maxLength: 60,
+          buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
           decoration: InputDecoration(
             hintText: widget.placeholderTexte ?? 'Ex: Joyeux anniversaire !',
             hintStyle: TextStyle(color: greyColor),
@@ -580,11 +596,29 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
         SizedBox(height: 20),
 
         // Message
-        Text('Message', style: TextStyle(fontWeight: FontWeight.w500, color: blackColor)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Message *', style: TextStyle(fontWeight: FontWeight.w500, color: blackColor)),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _messageController,
+              builder: (context, value, child) {
+                final length = value.text.length;
+                final color = length > 450 ? Colors.red : (length > 350 ? Colors.orange : greyColor);
+                return Text(
+                  '$length/500',
+                  style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w500),
+                );
+              },
+            ),
+          ],
+        ),
         SizedBox(height: 8),
         TextField(
           controller: _messageController,
           maxLines: 4,
+          maxLength: 500,
+          buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
           decoration: InputDecoration(
             hintText: 'Écrivez votre message ici...',
             hintStyle: TextStyle(color: greyColor),
@@ -603,7 +637,7 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
         SizedBox(height: 20),
 
         // Images
-        Text('Images (optionnel)', style: TextStyle(fontWeight: FontWeight.w500, color: blackColor)),
+        Text('Images *', style: TextStyle(fontWeight: FontWeight.w500, color: blackColor)),
         SizedBox(height: 8),
         CustomPaint(
           painter: DottedBorderPainter(
@@ -1455,22 +1489,7 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
                                 fit: BoxFit.contain,
                               ),
                             )
-                          : SizedBox(
-                              height: 180,
-                              child: PageView.builder(
-                                itemCount: images.length,
-                                itemBuilder: (context, index) {
-                                  return Container(
-                                    color: Color(0xFFF8F9FA),
-                                    child: Image.file(
-                                      images[index]!,
-                                      width: double.infinity,
-                                      fit: BoxFit.contain,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
+                          : _buildImageCarousel(images),
                     // Message text
                     if (_messageController.text.isNotEmpty)
                       Container(
@@ -1494,6 +1513,54 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
           ],
         ),
       ),
+    );
+  }
+
+  // Widget carousel d'images avec indicateurs de pagination
+  Widget _buildImageCarousel(List<File?> images) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Carousel d'images avec AspectRatio carré (comme les images sont croppées en carré)
+        AspectRatio(
+          aspectRatio: 1, // Carré car les images sont croppées en carré
+          child: PageView.builder(
+            itemCount: images.length,
+            onPageChanged: (index) {
+              setState(() => _previewImageIndex = index);
+            },
+            itemBuilder: (context, index) {
+              return Container(
+                color: Color(0xFFF8F9FA),
+                child: Image.file(
+                  images[index]!,
+                  width: double.infinity,
+                  fit: BoxFit.contain,
+                ),
+              );
+            },
+          ),
+        ),
+        // Indicateurs de pagination (dots)
+        SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(images.length, (index) {
+            return Container(
+              margin: EdgeInsets.symmetric(horizontal: 3),
+              width: _previewImageIndex == index ? 8 : 6,
+              height: _previewImageIndex == index ? 8 : 6,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _previewImageIndex == index
+                    ? blueColor
+                    : greyColor.withValues(alpha: 0.4),
+              ),
+            );
+          }),
+        ),
+        SizedBox(height: 8),
+      ],
     );
   }
 
@@ -1624,22 +1691,7 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
                                               ),
                                             );
                                           } else {
-                                            return SizedBox(
-                                              height: 180,
-                                              child: PageView.builder(
-                                                itemCount: images.length,
-                                                itemBuilder: (context, index) {
-                                                  return Container(
-                                                    color: Color(0xFFF8F9FA),
-                                                    child: Image.file(
-                                                      images[index]!,
-                                                      width: double.infinity,
-                                                      fit: BoxFit.contain,
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                            );
+                                            return _buildImageCarousel(images);
                                           }
                                         },
                                       ),
@@ -1760,9 +1812,7 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
                       GestureDetector(
                         onTap: () {
                           Clipboard.setData(ClipboardData(text: shareLink));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Lien copié !'), backgroundColor: Colors.green),
-                          );
+                          ToastNotification.success(context, 'Lien copié !');
                         },
                         child: Container(
                           width: 48,

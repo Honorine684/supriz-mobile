@@ -11,11 +11,13 @@ class CacheService {
     'isLoggedIn',
     'isFirstLaunch',
     'userId',
-    'userName',
-    'userEmail',
-    'userPhone',
+    'name',
+    'email',
+    'numero',
     'fcm_token',
     'device_id',
+    'localProfileImagePath',
+    'profileImagePath',
   ];
 
   /// Calculer la taille totale du cache

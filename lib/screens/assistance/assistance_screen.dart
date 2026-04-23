@@ -29,7 +29,7 @@ class _AssistanceScreenState extends State<AssistanceScreen> {
 
   // Ouvrir le store pour laisser un avis
   Future<void> _openStore() async {
-    final String appId = Platform.isIOS ? 'id6740044377' : 'com.app.supriz';
+    final String appId = Platform.isIOS ? 'id6740044377' : 'com.supriz.app';
     final Uri url = Platform.isIOS
         ? Uri.parse('https://apps.apple.com/app/$appId?action=write-review')
         : Uri.parse('https://play.google.com/store/apps/details?id=$appId');
@@ -43,7 +43,7 @@ class _AssistanceScreenState extends State<AssistanceScreen> {
   Future<void> _shareApp() async {
     final String storeLink = Platform.isIOS
         ? 'https://apps.apple.com/app/id6740044377'
-        : 'https://play.google.com/store/apps/details?id=com.app.supriz';
+        : 'https://play.google.com/store/apps/details?id=com.supriz.app';
     final String message = "Découvre Supriz, l'app pour envoyer des messages surprises éphémères à tes proches! Télécharge-la ici: $storeLink";
     await Share.share(message);
   }

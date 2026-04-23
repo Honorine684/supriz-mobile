@@ -12,6 +12,7 @@ import 'package:supriz/screens/auth/login_screen.dart';
 import '../../consts/consts.dart';
 import '../../widgets/appbar_custom.dart';
 import '../../widgets/our_button.dart';
+import '../../widgets/toast_notification.dart';
 import '../../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -24,7 +25,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController(text: '');
+  final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
@@ -32,14 +33,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isGoogleLoading = false;
   bool _isAppleLoading = false;
   final AuthService _authService = AuthService();
+  String _completePhoneNumber = ''; // Stocker le numéro complet séparément
+  String _countryCode = '+229'; // Code pays par défaut (Bénin)
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
-    serverClientId: '852250813157-korlpa310j3d4bv4sd2rc5lt2laqdaoi.apps.googleusercontent.com',
+    serverClientId: '354215331935-kjcejhimh30l8h6ml708d7dl7nmkr896.apps.googleusercontent.com',
   );
 
   Future<void> registerUser() async {
     if (_formKey.currentState!.validate()) {
+      // Vérifier que le numéro de téléphone est bien rempli
+      String phoneNumber = _completePhoneNumber;
+      if (phoneNumber.isEmpty && phoneController.text.isNotEmpty) {
+        // Utiliser le numéro du controller avec le code pays stocké
+        phoneNumber = '$_countryCode${phoneController.text}';
+      }
+
+      if (phoneNumber.isEmpty) {
+        ToastNotification.error(context, 'Veuillez entrer votre numéro de téléphone.');
+        return;
+      }
+
       setState(() {
         _isLoading = true;
       });
@@ -47,7 +62,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       await _authService.registerUser(
         usernameController.text,
         emailController.text,
-        phoneController.text,
+        phoneNumber,
         passwordController.text,
         context,
         (bool isLoading) {
@@ -84,9 +99,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
       }
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur de connexion Google: $error')),
-      );
+      if (mounted) {
+        ToastNotification.error(context, 'Connexion Google impossible. Veuillez réessayer.');
+      }
     } finally {
       setState(() {
         _isGoogleLoading = false;
@@ -120,9 +135,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         },
       );
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur de connexion Apple: $error')),
-      );
+      if (mounted) {
+        ToastNotification.error(context, 'Connexion Apple impossible. Veuillez réessayer.');
+      }
     } finally {
       setState(() {
         _isAppleLoading = false;
@@ -297,6 +312,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             languageCode: 'fr',
                             invalidNumberMessage: 'Numéro invalide',
                             disableLengthCheck: true,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(10),
+                            ],
                             dropdownIconPosition: IconPosition.trailing,
                             flagsButtonPadding: EdgeInsets.only(left: 10),
                             showDropdownIcon: true,
@@ -324,16 +343,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             ),
                             onChanged: (phone) {
-                              // Stocker le numéro complet avec code pays
-                              phoneController.text = phone.completeNumber;
+                              // Stocker le numéro complet et le code pays
+                              _completePhoneNumber = phone.completeNumber;
+                              _countryCode = '+${phone.countryCode}';
                             },
                             validator: (phone) {
                               if (phone == null || phone.number.isEmpty) {
                                 return 'Ce champ est requis';
                               }
-                              // Pour le Bénin: 8 chiffres exactement
-                              if (phone.number.length != 8 && phone.number.length != 10) {
-                                return 'Le numéro doit contenir 8 ou 10 chiffres';
+                              if (phone.number.length != 10) {
+                                return 'Le numéro doit contenir 10 chiffres';
                               }
                               return null;
                             },
@@ -417,7 +436,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 child: _SocialButton(
                                   onPressed: _handleGoogleSignIn,
                                   isLoading: _isGoogleLoading,
-                                  label: 'avec google',
+                                  label: 'avec Google',
                                   isGoogle: true,
                                 ),
                               ),
@@ -428,7 +447,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   child: _SocialButton(
                                     onPressed: _handleAppleSignIn,
                                     isLoading: _isAppleLoading,
-                                    label: 'avec icloud',
+                                    label: 'avec Apple',
                                     isGoogle: false,
                                   ),
                                 ),
@@ -624,7 +643,7 @@ class _OtpScreenState extends State<OtpScreen> {
             ),
             const SizedBox(height: 10),
             const Text(
-              "Entrer le code de vérification qui vous a été envoyé par mail pour pouvoir réinitialiser votre mot de passe",
+              "Entrez le code de vérification qui vous a été envoyé par mail pour pouvoir réinitialiser votre mot de passe.",
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 14,
