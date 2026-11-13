@@ -41,3 +41,19 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Outils IA / local
+.claude/
+CLAUDE.local.md
+
+# Binaires de build (à distribuer via les stores, pas via git)
+*.apk
+*.aab
+*.ipa
+
+# Cache natif Android (CMake)
+android/app/.cxx/
+**/.cxx/
+
+# Config d'environnement locale
+env.json

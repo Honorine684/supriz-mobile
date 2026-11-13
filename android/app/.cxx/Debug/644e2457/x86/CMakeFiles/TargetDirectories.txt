@@ -1,2 +1,0 @@
-/Users/macbookpro/Documents/work/work/Projet/Supriz/supriz-emotions/android/app/.cxx/Debug/644e2457/x86/CMakeFiles/edit_cache.dir
-/Users/macbookpro/Documents/work/work/Projet/Supriz/supriz-emotions/android/app/.cxx/Debug/644e2457/x86/CMakeFiles/rebuild_cache.dir
