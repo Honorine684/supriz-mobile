@@ -18,17 +18,12 @@ class ProfilService {
         .add(await http.MultipartFile.fromPath('profil_image', image.path));
     request.headers['Authorization'] = 'Bearer $token';
 
-    print('Sending request to update profile image...');
-    print('Headers: ${request.headers}');
-    print('Files: ${request.files}');
-
     final response = await request.send();
 
     if (response.statusCode == 200) {
       final data = jsonDecode(await response.stream.bytesToString());
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('profileImagePath', '/storage/images/$image');
-      print('Success: ${data}');
       return data;
     } else {
       print(
@@ -98,21 +93,14 @@ class ProfilService {
       },
     );
 
-    print('Sending request to update profile...');
-    print('Endpoint: $endpoint');
-    print('Headers: ${response.request?.headers}');
-    print('Body: ${jsonEncode(body)}');
-
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      print('Success: ${data}');
       return data;
     } else if (response.statusCode == 302) {
       print('Redirect: ${response.headers['location']}');
       throw Exception('Redirect detected');
     } else {
       print('Failed to update profile. Status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
       throw Exception('Failed to update profile');
     }
   }

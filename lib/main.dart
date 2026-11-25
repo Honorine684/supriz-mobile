@@ -1,5 +1,7 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -13,7 +15,23 @@ import 'services/notification_service.dart';
 import 'services/firebase_notification_service.dart';
 import 'widgets/toast_notification.dart';
 
-void main() async {
+void main() {
+  // Version publiée : aucun journal (print / debugPrint) ne doit sortir dans
+  // les logs du téléphone, ils peuvent contenir des données personnelles.
+  if (kReleaseMode) {
+    debugPrint = (String? message, {int? wrapWidth}) {};
+    runZoned(
+      _startApp,
+      zoneSpecification: ZoneSpecification(
+        print: (self, parent, zone, line) {},
+      ),
+    );
+  } else {
+    _startApp();
+  }
+}
+
+Future<void> _startApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialiser Firebase

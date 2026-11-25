@@ -92,7 +92,6 @@ class FirebaseNotificationService {
   }
 
   Future<void> _saveToken(String token) async {
-    debugPrint('Token FCM: $token');
 
     // Sauvegarder localement
     final prefs = await SharedPreferences.getInstance();

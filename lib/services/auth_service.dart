@@ -430,7 +430,7 @@ class AuthService {
         },
       );
 
-      debugPrint('deleteUser response: ${response.statusCode} - ${response.body}');
+      debugPrint('deleteUser response: ${response.statusCode}');
 
       setLoading(false); // Fin du chargement
 
