@@ -653,7 +653,7 @@ class _OtpScreenState extends State<OtpScreen> {
             const SizedBox(height: 10),
             PinCodeTextField(
               appContext: context,
-              length: 4,
+              length: 6,
               controller: _otpController,
               onChanged: (value) {
                 setState(() {});
@@ -666,7 +666,7 @@ class _OtpScreenState extends State<OtpScreen> {
                 inactiveColor: Colors.grey,
                 activeColor: blueColor,
                 selectedColor: Colors.green,
-                fieldOuterPadding: const EdgeInsets.all(10),
+                fieldOuterPadding: const EdgeInsets.all(4),
               ),
               keyboardType: TextInputType.number,
               inputFormatters: [

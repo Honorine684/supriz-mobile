@@ -31,9 +31,11 @@ class _OTPScreenState extends State<OTPScreen> {
   }
 
   Future<void> _verifyOTP() async {
-    if (_otpController.text.length != 4) {
+    // 4 chiffres (ancien format serveur) ou 6 chiffres (nouveau format)
+    final codeLength = _otpController.text.length;
+    if (codeLength != 4 && codeLength != 6) {
       setState(() {
-        _errorMessage = 'Veuillez entrer le code à 4 chiffres';
+        _errorMessage = 'Veuillez entrer le code reçu par email';
       });
       return;
     }
@@ -147,7 +149,7 @@ class _OTPScreenState extends State<OTPScreen> {
                         SizedBox(height: 24),
                         PinCodeTextField(
                           appContext: context,
-                          length: 4,
+                          length: 6,
                           controller: _otpController,
                           onChanged: (value) {
                             setState(() {
@@ -157,8 +159,8 @@ class _OTPScreenState extends State<OTPScreen> {
                           pinTheme: PinTheme(
                             shape: PinCodeFieldShape.box,
                             borderRadius: BorderRadius.circular(12),
-                            fieldHeight: 55,
-                            fieldWidth: 55,
+                            fieldHeight: 50,
+                            fieldWidth: 40,
                             inactiveColor: greyColor.withValues(alpha: 0.3),
                             activeColor: blueColor,
                             selectedColor: blueColor,
