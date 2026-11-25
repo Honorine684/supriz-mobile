@@ -3,7 +3,7 @@
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supriz/services/token_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
@@ -49,8 +49,7 @@ class _AssistanceScreenState extends State<AssistanceScreen> {
   }
 
   Future<List<dynamic>> fetchFaqs() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = await TokenStorage.read();
 
     final response = await http.get(
       Uri.parse('$domaineapi/faq'),

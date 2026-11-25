@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supriz/services/token_storage.dart';
 import 'package:supriz/screens/auth/login_screen.dart';
 import 'package:supriz/screens/auth/register_screen.dart';
 import 'package:supriz/widgets/toast_notification.dart';
@@ -297,7 +298,7 @@ class AuthService {
 
           // Stocker le token dans shared_preferences
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('token', responseData['token'] ?? '');
+          await TokenStorage.write(responseData['token'] ?? '');
           await prefs.setBool('isLoggedIn', true);
           await prefs.setString('name', responseData['name'] ?? ''); // Stocker le nom de l'utilisateur
           await prefs.setString('numero', responseData['numero'] ?? ''); // Stocker le numéro de l'utilisateur
@@ -376,7 +377,7 @@ class AuthService {
 
           // Supprimer le token et les données utilisateur des shared_preferences
           final prefs = await SharedPreferences.getInstance();
-          await prefs.remove('token');
+          await TokenStorage.delete();
           await prefs.setBool('isLoggedIn', false);
           // Nettoyer les données de photo de profil pour éviter le partage entre comptes
           await prefs.remove('localProfileImagePath');
@@ -441,7 +442,7 @@ class AuthService {
 
           // Supprimer le token et les données utilisateur des shared_preferences
           final prefs = await SharedPreferences.getInstance();
-          await prefs.remove('token');
+          await TokenStorage.delete();
           await prefs.setBool('isLoggedIn', false);
           // Nettoyer les données de photo de profil
           await prefs.remove('localProfileImagePath');
@@ -508,7 +509,7 @@ class AuthService {
 
           // Stocker les informations utilisateur
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('token', responseData['token']);
+          await TokenStorage.write(responseData['token']);
           await prefs.setBool('isLoggedIn', true);
           await prefs.setString('name', responseData['name'] ?? name);
           await prefs.setString('email', responseData['email'] ?? email);
@@ -586,7 +587,7 @@ class AuthService {
 
           // Stocker les informations utilisateur
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('token', responseData['token']);
+          await TokenStorage.write(responseData['token']);
           await prefs.setBool('isLoggedIn', true);
           await prefs.setString('name', responseData['name'] ?? name);
           await prefs.setString('email', responseData['email'] ?? email);
@@ -624,8 +625,7 @@ class AuthService {
   }
 
   Future<String> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token') ?? '';
+    return (await TokenStorage.read()) ?? '';
   }
 
   // Méthode pour envoyer l'OTP à l'email de l'utilisateur

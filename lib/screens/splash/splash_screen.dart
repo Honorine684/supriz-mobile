@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supriz/services/token_storage.dart';
 import '../../consts/colors.dart';
 import '../../consts/images.dart';
 import '../../consts/strings.dart';
@@ -34,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen> {
     // Lire les valeurs des préférences
     final bool isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
     final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-    final String? token = prefs.getString('token');
+    final String? token = await TokenStorage.read();
 
     // Mettre à jour l'état de connexion en fonction de la présence du token
     if (token != null) {

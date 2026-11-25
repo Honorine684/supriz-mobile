@@ -1,7 +1,7 @@
 // notification_service.dart
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supriz/services/token_storage.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supriz/consts/consts.dart';
 
@@ -66,8 +66,7 @@ class NotificationService {
   }
 
   Future<String?> getAuthToken() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
+    return await TokenStorage.read();
   }
 
   Future<List<NotificationItem>> fetchNotifications() async {

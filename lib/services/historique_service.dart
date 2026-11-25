@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supriz/services/token_storage.dart';
 import '../consts/consts.dart';
 
 class HistoriqueService {
@@ -9,8 +9,7 @@ class HistoriqueService {
 
   Future<List<HistoriqueItem>> fetchHistoriques() async {
     try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStorage.read();
       final response = await http.get(
         Uri.parse(apiUrl),
         headers: {

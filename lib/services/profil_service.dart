@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supriz/services/token_storage.dart';
 import 'package:supriz/consts/consts.dart';
 import 'dart:io';
 
 class ProfilService {
   Future<String?> _getAuthToken() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
+    return await TokenStorage.read();
   }
 
   Future<Map<String, dynamic>> updateProfileImage(File image) async {

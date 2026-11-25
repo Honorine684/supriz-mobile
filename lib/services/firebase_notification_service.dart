@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supriz/services/token_storage.dart';
 import 'package:get/get.dart';
 import 'message_service.dart';
 import '../screens/historique/historique_screen.dart';
@@ -98,7 +99,7 @@ class FirebaseNotificationService {
     await prefs.setString('fcm_token', token);
 
     // Envoyer au backend si l'utilisateur est connecté
-    final authToken = prefs.getString('token');
+    final authToken = await TokenStorage.read();
     if (authToken != null) {
       await _messageService.updateFcmToken(token);
     }

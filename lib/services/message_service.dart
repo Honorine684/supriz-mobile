@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supriz/services/token_storage.dart';
 import '../consts/consts.dart';
 
 class MessageService {
@@ -10,8 +10,7 @@ class MessageService {
   /// Récupérer tous les messages de l'utilisateur
   Future<List<MessageItem>> fetchMessages() async {
     try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStorage.read();
 
       final response = await http.get(
         Uri.parse(baseUrl),
@@ -50,8 +49,7 @@ class MessageService {
     bool uniqueView = false,
   }) async {
     try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStorage.read();
 
       var request = http.MultipartRequest('POST', Uri.parse(baseUrl));
       request.headers['Authorization'] = 'Bearer $token';
@@ -100,8 +98,7 @@ class MessageService {
   /// Récupérer un message spécifique
   Future<MessageItem> getMessage(int id) async {
     try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStorage.read();
 
       final response = await http.get(
         Uri.parse('$baseUrl/$id'),
@@ -129,8 +126,7 @@ class MessageService {
   /// Supprimer un message
   Future<bool> deleteMessage(int id) async {
     try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStorage.read();
 
       final response = await http.delete(
         Uri.parse('$baseUrl/$id'),
@@ -154,8 +150,7 @@ class MessageService {
   /// Activer/Désactiver un message
   Future<bool> toggleMessageStatus(int id) async {
     try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStorage.read();
 
       final response = await http.post(
         Uri.parse('$baseUrl/$id/toggle-status'),
@@ -180,8 +175,7 @@ class MessageService {
   /// Récupérer les catégories Supriz
   Future<List<SuprizCategory>> getCategories() async {
     try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStorage.read();
 
       final response = await http.get(
         Uri.parse('$domaineapi/messages-categories'),
@@ -210,8 +204,7 @@ class MessageService {
   /// Récupérer les musiques
   Future<List<MusiqueItem>> getMusiques({int? categorieId}) async {
     try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStorage.read();
 
       String url = '$domaineapi/messages-musiques';
       if (categorieId != null) {
@@ -251,8 +244,7 @@ class MessageService {
   /// Récupérer les arrière-plans
   Future<List<ArrierePlanItem>> getArrierePlans({int? categorieId}) async {
     try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStorage.read();
 
       String url = '$domaineapi/messages-arriere-plans';
       if (categorieId != null) {
@@ -358,8 +350,7 @@ class MessageService {
   /// Mettre à jour le token FCM
   Future<void> updateFcmToken(String fcmToken) async {
     try {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = await TokenStorage.read();
 
       await http.post(
         Uri.parse('$domaineapi/update-fcm-token'),
