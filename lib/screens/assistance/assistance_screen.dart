@@ -1,7 +1,7 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'dart:io';
-import 'package:http/http.dart' as http;
+import 'package:supriz/services/api_http.dart' as http;
 import 'dart:convert';
 import 'package:supriz/services/token_storage.dart';
 import 'package:flutter/material.dart';

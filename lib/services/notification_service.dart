@@ -1,5 +1,5 @@
 // notification_service.dart
-import 'package:http/http.dart' as http;
+import 'package:supriz/services/api_http.dart' as http;
 import 'dart:convert';
 import 'package:supriz/services/token_storage.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';

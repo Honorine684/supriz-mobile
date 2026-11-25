@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
+import 'package:supriz/services/api_http.dart' as http;
 import 'package:supriz/services/token_storage.dart';
 import '../consts/consts.dart';
 
@@ -74,7 +74,7 @@ class MessageService {
         }
       }
 
-      final streamedResponse = await request.send();
+      final streamedResponse = await request.send().timeout(http.apiUploadTimeout);
       final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 201) {

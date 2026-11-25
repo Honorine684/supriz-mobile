@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:supriz/services/api_http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:supriz/services/token_storage.dart';
 import '../consts/consts.dart';

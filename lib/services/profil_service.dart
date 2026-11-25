@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:supriz/services/api_http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supriz/services/token_storage.dart';
 import 'package:supriz/consts/consts.dart';
@@ -18,7 +18,7 @@ class ProfilService {
         .add(await http.MultipartFile.fromPath('profil_image', image.path));
     request.headers['Authorization'] = 'Bearer $token';
 
-    final response = await request.send();
+    final response = await request.send().timeout(http.apiUploadTimeout);
 
     if (response.statusCode == 200) {
       final data = jsonDecode(await response.stream.bytesToString());
