@@ -2,6 +2,7 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -10,6 +11,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../consts/consts.dart';
 import '../../services/message_service.dart';
 import '../../services/audio_cache_service.dart';
@@ -44,6 +46,12 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
   final ImagePicker _imagePicker = ImagePicker();
   String _selectedExpiration = '24h';
   final List<File?> _selectedImages = [null, null, null];
+  // Légende de chaque photo (même index que _selectedImages), facultative
+  final List<TextEditingController> _captionControllers =
+      List.generate(3, (_) => TextEditingController());
+  static const int _captionMaxLength = 30;
+  // Nom affiché en signature sous la lettre (nom du compte)
+  String? _senderName;
   bool _isLoading = false;
   final MessageService _messageService = MessageService();
 
@@ -68,7 +76,7 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
   // Aperçu cadeau
   bool _previewGiftOpened = false;
 
-  // Index du carousel d'images dans l'aperçu
+  // Index de la photo du dessus dans la pile de polaroids de l'aperçu
   int _previewImageIndex = 0;
 
   // Backgrounds depuis l'API
@@ -90,12 +98,24 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
     super.initState();
     _loadMusiques();
     _loadArrierePlans();
+    _loadSenderName();
+  }
+
+  Future<void> _loadSenderName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString('name')?.trim();
+    if (mounted && name != null && name.isNotEmpty) {
+      setState(() => _senderName = name);
+    }
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _messageController.dispose();
+    for (final controller in _captionControllers) {
+      controller.dispose();
+    }
     _audioPlayer.dispose();
     super.dispose();
   }
@@ -323,9 +343,17 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
 
     try {
       List<File>? imageFiles;
+      final List<String?> imageCaptions = [];
       final images = _selectedImages.where((img) => img != null).toList();
       if (images.isNotEmpty) {
         imageFiles = images.cast<File>();
+      }
+      // Légendes alignées sur la liste compactée des photos
+      for (int i = 0; i < _selectedImages.length; i++) {
+        if (_selectedImages[i] != null) {
+          final caption = _captionControllers[i].text.trim();
+          imageCaptions.add(caption.isNotEmpty ? caption : null);
+        }
       }
 
       final result = await _messageService.createMessage(
@@ -333,6 +361,7 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
         contenu: _messageController.text.isNotEmpty ? _messageController.text : null,
         sousCategorieId: widget.categoryId,
         images: imageFiles,
+        imageCaptions: imageCaptions,
         backgroundPath: _getBackgroundPath(_selectedBackgroundIndex),
         musiqueId: _selectedMusique?.id,
         expiration: _selectedExpiration,
@@ -657,6 +686,14 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
             ),
           ),
         ),
+        // Légende par photo (affichée sous le polaroid)
+        if (_selectedImages.any((img) => img != null)) ...[
+          SizedBox(height: 12),
+          Text('Légendes (facultatif)', style: TextStyle(fontWeight: FontWeight.w500, color: blackColor)),
+          SizedBox(height: 8),
+          for (int i = 0; i < _selectedImages.length; i++)
+            if (_selectedImages[i] != null) _buildCaptionField(i),
+        ],
         SizedBox(height: 20),
 
         // Vue unique
@@ -707,7 +744,12 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
     final hasImage = _selectedImages[index] != null;
 
     return GestureDetector(
-      onTap: () => hasImage ? setState(() => _selectedImages[index] = null) : _pickImage(index),
+      onTap: () => hasImage
+          ? setState(() {
+              _selectedImages[index] = null;
+              _captionControllers[index].clear();
+            })
+          : _pickImage(index),
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 4),
         height: 80,
@@ -744,6 +786,47 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
                   Text('Photo ${index + 1}', style: TextStyle(fontSize: 10, color: greyColor)),
                 ],
               ),
+      ),
+    );
+  }
+
+  Widget _buildCaptionField(int index) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.file(_selectedImages[index]!, width: 44, height: 44, fit: BoxFit.cover),
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: _captionControllers[index],
+              maxLength: _captionMaxLength,
+              textCapitalization: TextCapitalization.sentences,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: 'Légende de la photo ${index + 1}',
+                counterText: '',
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: greyColor.withValues(alpha: 0.3)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: greyColor.withValues(alpha: 0.3)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: blueColor, width: 2),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1177,7 +1260,7 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
           },
           child: Container(
             width: double.infinity,
-            height: 380,
+            height: 460,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
@@ -1409,14 +1492,29 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
     );
   }
 
-  // Vue du message (après ouverture du cadeau) - Style carte blanche comme le web
-  Widget _buildMessageView() {
-    final images = _selectedImages.where((img) => img != null).toList();
+  // ===== Lot 5 : aperçu identique à la page web (pile de polaroids, lettre) =====
+  static const Color _kraftColor = Color(0xFFC9A27A);
+  static const Color _paperColor = Color(0xFFFFFDF8);
+  static const Color _inkColor = Color(0xFF2A1D10);
+  static const Color _handInkColor = Color(0xFF2B2B2B);
 
+  // Vue du message dans l'aperçu (après ouverture du cadeau)
+  Widget _buildMessageView() {
     return Padding(
       padding: EdgeInsets.all(12),
-      child: SingleChildScrollView(
-        child: Column(
+      child: SingleChildScrollView(child: _buildMessageContent()),
+    );
+  }
+
+  // Contenu du message : musique + planche kraft (aperçu et page de résultat)
+  Widget _buildMessageContent() {
+    final images = _selectedImages.whereType<File>().toList();
+    final captions = <String>[
+      for (int i = 0; i < _selectedImages.length; i++)
+        if (_selectedImages[i] != null) _captionControllers[i].text.trim(),
+    ];
+
+    return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Music indicator en haut
@@ -1440,11 +1538,12 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
                   ],
                 ),
               ),
-            // Carte blanche avec contenu
+            // Planche kraft
             Container(
               width: double.infinity,
+              padding: EdgeInsets.fromLTRB(14, 14, 14, 16),
               decoration: BoxDecoration(
-                color: whiteColor,
+                color: _kraftColor,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -1454,113 +1553,246 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
                   ),
                 ],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Header avec titre
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: greyColor.withValues(alpha: 0.2)),
-                        ),
-                      ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _titleController.text.isNotEmpty ? _titleController.text : 'Titre',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.montserrat(
+                      color: _inkColor,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  if (images.isNotEmpty) _buildPolaroidStack(images, captions),
+                  if (images.length > 1)
+                    Padding(
+                      padding: EdgeInsets.only(top: 4),
                       child: Text(
-                        _titleController.text.isNotEmpty ? _titleController.text : 'Titre',
+                        'Touche la photo pour voir la suivante · ${(_previewImageIndex % images.length) + 1} / ${images.length}',
                         style: GoogleFonts.montserrat(
-                          color: blackColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF4E3420),
                         ),
                       ),
                     ),
-                    // Image section - carousel si plusieurs images
-                    if (images.isNotEmpty)
-                      images.length == 1
-                          ? Container(
-                              width: double.infinity,
-                              color: Color(0xFFF8F9FA),
-                              child: Image.file(
-                                images.first!,
-                                width: double.infinity,
-                                fit: BoxFit.contain,
-                              ),
-                            )
-                          : _buildImageCarousel(images),
-                    // Message text
-                    if (_messageController.text.isNotEmpty)
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(16),
-                        child: Text(
-                          _messageController.text,
-                          style: GoogleFonts.montserrat(
-                            color: blackColor.withValues(alpha: 0.8),
-                            fontSize: 13,
-                            height: 1.5,
-                          ),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
+                  if (_messageController.text.trim().isNotEmpty) ...[
+                    SizedBox(height: 14),
+                    _buildLetterNote(_messageController.text.trim()),
                   ],
-                ),
+                ],
               ),
             ),
           ],
+    );
+  }
+
+  // Pile de polaroids : un toucher fait passer la photo du dessus en dessous
+  Widget _buildPolaroidStack(List<File> images, List<String> captions) {
+    const double cardWidth = 170;
+    const spots = <List<double>>[
+      // [rotation en degrés, décalage x, décalage y]
+      [-2, 0, 0],
+      [6, 12, 7],
+      [-8, -14, 10],
+    ];
+    final count = images.length;
+    final top = _previewImageIndex % count;
+
+    Widget card(int index, int pos) {
+      final spot = spots[math.min(pos, spots.length - 1)];
+      final caption = index < captions.length ? captions[index] : '';
+      return GestureDetector(
+        key: ValueKey(index),
+        onTap: count > 1 ? () => setState(() => _previewImageIndex = (top + 1) % count) : null,
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 450),
+          curve: Curves.easeOutCubic,
+          width: cardWidth,
+          padding: EdgeInsets.fromLTRB(8, 8, 8, 0),
+          transformAlignment: Alignment.center,
+          transform: Matrix4.translationValues(spot[1], spot[2], 0)
+            ..rotateZ(spot[0] * math.pi / 180),
+          decoration: BoxDecoration(
+            color: _paperColor,
+            boxShadow: [
+              BoxShadow(
+                color: Color(0xFF3C230A).withValues(alpha: 0.28),
+                blurRadius: 18,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AspectRatio(
+                aspectRatio: 1,
+                child: Image.file(images[index], fit: BoxFit.cover),
+              ),
+              SizedBox(
+                height: 34,
+                child: Center(
+                  child: Text(
+                    caption,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.caveat(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: _handInkColor,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
+      );
+    }
+
+    return SizedBox(
+      width: cardWidth + 40,
+      height: cardWidth + 34 + (count > 1 ? 26 : 10),
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.topCenter,
+        children: [
+          // De la photo la plus au fond à celle du dessus
+          for (int pos = count - 1; pos >= 0; pos--) card((top + pos) % count, pos),
+        ],
       ),
     );
   }
 
-  // Widget carousel d'images avec indicateurs de pagination
-  Widget _buildImageCarousel(List<File?> images) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Carousel d'images avec AspectRatio carré (comme les images sont croppées en carré)
-        AspectRatio(
-          aspectRatio: 1, // Carré car les images sont croppées en carré
-          child: PageView.builder(
-            itemCount: images.length,
-            onPageChanged: (index) {
-              setState(() => _previewImageIndex = index);
-            },
-            itemBuilder: (context, index) {
-              return Container(
-                color: Color(0xFFF8F9FA),
-                child: Image.file(
-                  images[index]!,
-                  width: double.infinity,
-                  fit: BoxFit.contain,
-                ),
-              );
-            },
-          ),
-        ),
-        // Indicateurs de pagination (dots)
-        SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(images.length, (index) {
-            return Container(
-              margin: EdgeInsets.symmetric(horizontal: 3),
-              width: _previewImageIndex == index ? 8 : 6,
-              height: _previewImageIndex == index ? 8 : 6,
+  // Lettre : tronquée en fondu si elle est longue, avec « Lire la lettre »
+  Widget _buildLetterNote(String text) {
+    final textStyle = GoogleFonts.caveat(fontSize: 19, height: 1.22, color: _handInkColor);
+    final signatureStyle = GoogleFonts.caveat(fontSize: 18, color: blueColor);
+    const int previewLines = 4;
+    const double notePadding = 12;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final painter = TextPainter(
+          text: TextSpan(text: text, style: textStyle),
+          maxLines: previewLines,
+          textDirection: TextDirection.ltr,
+        )..layout(maxWidth: constraints.maxWidth - notePadding * 2);
+        final isLong = painter.didExceedMaxLines;
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(notePadding),
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _previewImageIndex == index
-                    ? blueColor
-                    : greyColor.withValues(alpha: 0.4),
+                color: _paperColor,
+                borderRadius: BorderRadius.circular(4),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFF3C230A).withValues(alpha: 0.18),
+                    blurRadius: 12,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
-            );
-          }),
-        ),
-        SizedBox(height: 8),
-      ],
+              child: isLong
+                  ? ShaderMask(
+                      blendMode: BlendMode.dstIn,
+                      shaderCallback: (rect) => LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.black, Colors.transparent],
+                        stops: [0.55, 1],
+                      ).createShader(rect),
+                      child: Text(text, style: textStyle, maxLines: previewLines, overflow: TextOverflow.clip),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(text, style: textStyle),
+                        if (_senderName != null)
+                          Text('— $_senderName', textAlign: TextAlign.right, style: signatureStyle),
+                      ],
+                    ),
+            ),
+            if (isLong)
+              Padding(
+                padding: EdgeInsets.only(top: 12),
+                child: ElevatedButton(
+                  onPressed: () => _openLetterSheet(text),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: blueColor,
+                    foregroundColor: whiteColor,
+                    minimumSize: Size(0, 44),
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    shape: StadiumBorder(),
+                  ),
+                  child: Text('Lire la lettre', style: GoogleFonts.montserrat(fontWeight: FontWeight.w700, fontSize: 13)),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Lettre complète sur une feuille lignée qui monte du bas de l'écran
+  void _openLetterSheet(String text) {
+    const double lineHeight = 32;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(sheetContext).size.height * 0.86),
+          child: ClipRRect(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            child: CustomPaint(
+              painter: _LinedPaperPainter(lineHeight: lineHeight),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(20, 22, 20, 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      text,
+                      style: GoogleFonts.caveat(fontSize: 22, height: lineHeight / 22, color: _handInkColor),
+                    ),
+                    if (_senderName != null)
+                      Text(
+                        '— $_senderName',
+                        textAlign: TextAlign.right,
+                        style: GoogleFonts.caveat(fontSize: 21, height: lineHeight / 21, color: blueColor),
+                      ),
+                    SizedBox(height: 16),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(sheetContext),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: blueColor,
+                          foregroundColor: whiteColor,
+                          minimumSize: Size(0, 44),
+                          padding: EdgeInsets.symmetric(horizontal: 22),
+                          shape: StadiumBorder(),
+                        ),
+                        child: Text('Fermer la lettre', style: GoogleFonts.montserrat(fontWeight: FontWeight.w700, fontSize: 13)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1614,109 +1846,7 @@ class _CreateMessageFlowState extends State<CreateMessageFlow> {
                       // Contenu
                       Padding(
                         padding: EdgeInsets.all(16),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Music indicator en haut
-                            if (_selectedMusique != null)
-                              Container(
-                                margin: EdgeInsets.only(bottom: 12),
-                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: whiteColor.withValues(alpha: 0.95),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.music_note, color: blueColor, size: 14),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      _selectedMusique!.titre,
-                                      style: TextStyle(color: blueColor, fontSize: 11, fontWeight: FontWeight.w500),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            // Carte blanche avec contenu
-                            Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: whiteColor,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.15),
-                                    blurRadius: 15,
-                                    offset: Offset(0, 5),
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Header avec titre
-                                    Container(
-                                      width: double.infinity,
-                                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                      decoration: BoxDecoration(
-                                        border: Border(
-                                          bottom: BorderSide(color: greyColor.withValues(alpha: 0.2)),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        _titleController.text.isNotEmpty ? _titleController.text : 'Titre',
-                                        style: GoogleFonts.montserrat(
-                                          color: blackColor,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    // Image section - carousel si plusieurs images
-                                    if (_selectedImages.any((img) => img != null))
-                                      Builder(
-                                        builder: (context) {
-                                          final images = _selectedImages.where((img) => img != null).toList();
-                                          if (images.length == 1) {
-                                            return Container(
-                                              width: double.infinity,
-                                              color: Color(0xFFF8F9FA),
-                                              child: Image.file(
-                                                images.first!,
-                                                width: double.infinity,
-                                                fit: BoxFit.contain,
-                                              ),
-                                            );
-                                          } else {
-                                            return _buildImageCarousel(images);
-                                          }
-                                        },
-                                      ),
-                                    // Message text
-                                    if (_messageController.text.isNotEmpty)
-                                      Container(
-                                        width: double.infinity,
-                                        padding: EdgeInsets.all(16),
-                                        child: Text(
-                                          _messageController.text,
-                                          style: GoogleFonts.montserrat(
-                                            color: blackColor.withValues(alpha: 0.8),
-                                            fontSize: 13,
-                                            height: 1.5,
-                                          ),
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                        child: _buildMessageContent(),
                       ),
                     ],
                   ),
@@ -1983,4 +2113,25 @@ class DottedBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Papier ligné de la lettre complète (même rendu que la page web)
+class _LinedPaperPainter extends CustomPainter {
+  final double lineHeight;
+
+  _LinedPaperPainter({required this.lineHeight});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFFFFFDF8));
+    final linePaint = Paint()
+      ..color = const Color(0xFFD9E4EE)
+      ..strokeWidth = 1;
+    for (double y = lineHeight; y < size.height; y += lineHeight) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _LinedPaperPainter oldDelegate) => oldDelegate.lineHeight != lineHeight;
 }

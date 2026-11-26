@@ -43,6 +43,7 @@ class MessageService {
     required int sousCategorieId,
     File? media,
     List<File>? images,
+    List<String?>? imageCaptions, // imageCaptions[i] = légende de images[i]
     String? backgroundPath,
     int? musiqueId,
     String expiration = '24h',
@@ -71,6 +72,12 @@ class MessageService {
       if (images != null && images.isNotEmpty) {
         for (int i = 0; i < images.length; i++) {
           request.files.add(await http.MultipartFile.fromPath('images[$i]', images[i].path));
+          final caption = (imageCaptions != null && i < imageCaptions.length)
+              ? imageCaptions[i]?.trim()
+              : null;
+          if (caption != null && caption.isNotEmpty) {
+            request.fields['image_captions[$i]'] = caption;
+          }
         }
       }
 
